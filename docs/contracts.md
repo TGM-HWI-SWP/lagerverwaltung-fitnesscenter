@@ -288,45 +288,39 @@ Lädt alle Check-ins eines Mitglieds.
 
 ---
 
-## 4. Domain Models
+---
 
-### Product
+## 4. ReportPort
 
-**Attribute:**
-- `id: str` - Eindeutige ID
-- `name: str` - Produktname
-- `description: str` - Beschreibung
-- `price: float` - Preis pro Einheit
-- `quantity: int` - Bestand
-- `sku: str` - Stock Keeping Unit
-- `category: str` - Kategorie
-- `created_at: datetime` - Erstellungsdatum
-- `updated_at: datetime` - Änderungsdatum
-- `notes: str` - Anmerkungen
+**Verantwortlich:** Rolle 2 / spätere Integration
 
-**Methoden:**
-- `update_quantity(amount: int) -> None` - Bestand ändern
-- `get_total_value() -> float` - Gesamtwert berechnen
+### Beschreibung
+Abstrakte Schnittstelle für die Generierung von Reports auf Basis gespeicherter Daten.
 
-### Movement
+Da das Projekt derzeit ohne Report B weitergeführt wird, wird zunächst nur **Report A** berücksichtigt.
 
-**Attribute:**
-- `id: str` - Eindeutige Bewegungs-ID
-- `product_id: str` - Verweis auf Produkt
-- `product_name: str` - Name des Produkts
-- `quantity_change: int` - Mengenänderung (+/-)
-- `movement_type: str` - "IN", "OUT", "CORRECTION"
-- `reason: str` - Grund (optional)
-- `timestamp: datetime` - Zeitstempel
-- `performed_by: str` - Benutzer
+### Methoden
+
+#### `generate_member_overview() -> list[dict]`
+Generiert eine Übersicht aller Mitglieder.
+
+**Return:**
+- Liste von Dictionaries mit z. B.:
+  - `member_id`
+  - `full_name`
+  - `membership_name`
+  - `active`
+
+**Implementierungen:**
+- `MemberOverviewReportAdapter` (geplant)
 
 ---
 
-## Versionshistorie der Contracts
+#### `generate_active_members_report() -> list[dict]`
+Generiert eine Übersicht aktiver Mitglieder.
 
-### v0.1 (2025-01-20)
-- RepositoryPort: Grundlegende CRUD-Operationen
-- ReportPort: Basis-Report-Generierung
-- WarehouseService: Kern-Use-Cases
-- Product: Basis-Domain-Model
-- Movement: Lagerbewegungen-Protokoll
+**Return:**
+- Liste aktiver Mitglieder
+
+**Implementierungen:**
+- `MemberOverviewReportAdapter` (optional)
