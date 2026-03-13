@@ -2,81 +2,53 @@
 
 ## Übersicht
 
-Diese Datei dokumentiert alle externen Schnittstellen des Projekts. Sie wird von Rolle 1 (Contract Owner) gepflegt und aktualisiert bei jeder Änderung.
+# Schnittstellen-Dokumentation (Contracts)
+
+Diese Datei dokumentiert die zentralen Schnittstellen des Projekts **Fitnesscenter**.
+Sie wird von **Rolle 1 (Contract Owner)** gepflegt und bei Änderungen an Architektur, Services, Repositories oder Reports aktualisiert.
+
+Die Contracts definieren, wie die einzelnen Komponenten miteinander kommunizieren:
+
+- GUI
+- Businesslogik
+- Datenpersistenz
+- Reports
 
 ---
 
-## 1. RepositoryPort
+## 1. Zentrale Domänenobjekte
 
-**Verantwortlich:** Rolle 2 (Businesslogik)
+### Member
 
-### Beschreibung
-Abstrakte Schnittstelle für Datenpersistenz. Ermöglicht den Austausch zwischen verschiedenen Speicheradaptern (In-Memory, SQLite, JSON, etc.)
+Repräsentiert ein Mitglied des Fitnesscenters.
 
-### Methoden
+**Attribute:**
+- `member_id: str` - Eindeutige ID des Mitglieds
+- `first_name: str` - Vorname
+- `last_name: str` - Nachname
+- `birth_date: str` - Geburtsdatum
+- `membership_id: str | None` - Zugewiesene Mitgliedschaft
+- `active: bool` - Status des Mitglieds
 
-#### `save_product(product: Product) -> None`
-Speichert ein Produkt.
+### Membership
 
-**Parameter:**
-- `product`: Product-Instanz
+Repräsentiert eine Mitgliedschaft bzw. ein Abo.
 
-**Exceptions:**
-- Keine
+**Attribute:**
+- `membership_id: str` - Eindeutige ID der Mitgliedschaft
+- `name: str` - Name des Abos
+- `price_per_month: float` - Monatlicher Preis
+- `duration_months: int` - Laufzeit in Monaten
+- `active: bool` - Status der Mitgliedschaft
 
-**Implementierungen:**
-- `InMemoryRepository` (v0.1)
+### CheckIn
 
-#### `load_product(product_id: str) -> Optional[Product]`
-Lädt ein einzelnes Produkt.
+Repräsentiert einen Check-in eines Mitglieds.
 
-**Parameter:**
-- `product_id`: Eindeutige Produkt-ID
-
-**Return:**
-- `Product` oder `None` falls nicht gefunden
-
-**Implementierungen:**
-- `InMemoryRepository` (v0.1)
-
-#### `load_all_products() -> Dict[str, Product]`
-Lädt alle Produkte.
-
-**Return:**
-- Dictionary mit Product-IDs als Keys
-
-**Implementierungen:**
-- `InMemoryRepository` (v0.1)
-
-#### `delete_product(product_id: str) -> None`
-Löscht ein Produkt.
-
-**Parameter:**
-- `product_id`: Eindeutige Produkt-ID
-
-**Exceptions:**
-- Keine (ignoriert unbekannte IDs)
-
-**Implementierungen:**
-- `InMemoryRepository` (v0.1)
-
-#### `save_movement(movement: Movement) -> None`
-Speichert eine Lagerbewegung.
-
-**Parameter:**
-- `movement`: Movement-Instanz
-
-**Implementierungen:**
-- `InMemoryRepository` (v0.1)
-
-#### `load_movements() -> List[Movement]`
-Lädt alle Lagerbewegungen.
-
-**Return:**
-- Liste von Movement-Objekten
-
-**Implementierungen:**
-- `InMemoryRepository` (v0.1)
+**Attribute:**
+- `checkin_id: str` - Eindeutige ID des Check-ins
+- `member_id: str` - Zugehörige Mitglieds-ID
+- `timestamp: str` - Zeitpunkt des Check-ins
 
 ---
 
