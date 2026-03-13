@@ -18,37 +18,82 @@ Die Contracts definieren, wie die einzelnen Komponenten miteinander kommuniziere
 
 ## 1. Zentrale Domänenobjekte
 
+### Product
+
+Repräsentiert ein Produkt im Fitnesscenter (z. B. Snacks, Getränke, Zubehör).
+
+**Attribute:**
+- `product_id: str` - Eindeutige Produkt-ID
+- `name: str` - Produktname
+- `description: str` - Beschreibung
+- `price: float` - Preis pro Einheit
+- `quantity: int` - Lagerbestand
+- `category: str` - Kategorie (Snack, Getränk, Zubehör)
+
+---
+
+### Movement
+
+Repräsentiert eine Lagerbewegung eines Produkts.
+
+**Attribute:**
+- `movement_id: str`
+- `product_id: str`
+- `quantity_change: int`
+- `movement_type: str` - IN / OUT / CORRECTION
+- `timestamp: str`
+- `performed_by: str`
+
+---
+
 ### Member
 
 Repräsentiert ein Mitglied des Fitnesscenters.
 
 **Attribute:**
-- `member_id: str` - Eindeutige ID des Mitglieds
-- `first_name: str` - Vorname
-- `last_name: str` - Nachname
-- `birth_date: str` - Geburtsdatum
-- `membership_id: str | None` - Zugewiesene Mitgliedschaft
-- `active: bool` - Status des Mitglieds
+- `member_id: str`
+- `first_name: str`
+- `last_name: str`
+- `birth_date: str`
+- `active: bool`
 
-### Membership
+---
 
-Repräsentiert eine Mitgliedschaft bzw. ein Abo.
+### Employee
 
-**Attribute:**
-- `membership_id: str` - Eindeutige ID der Mitgliedschaft
-- `name: str` - Name des Abos
-- `price_per_month: float` - Monatlicher Preis
-- `duration_months: int` - Laufzeit in Monaten
-- `active: bool` - Status der Mitgliedschaft
-
-### CheckIn
-
-Repräsentiert einen Check-in eines Mitglieds.
+Repräsentiert einen Mitarbeiter des Fitnesscenters.
 
 **Attribute:**
-- `checkin_id: str` - Eindeutige ID des Check-ins
-- `member_id: str` - Zugehörige Mitglieds-ID
-- `timestamp: str` - Zeitpunkt des Check-ins
+- `employee_id: str`
+- `first_name: str`
+- `last_name: str`
+- `role: str`
+- `active: bool`
+
+---
+
+### Equipment
+
+Repräsentiert ein Fitnessgerät.
+
+**Attribute:**
+- `equipment_id: str`
+- `name: str`
+- `type: str`
+- `status: str`
+- `location: str`
+
+---
+
+### VendingMachine
+
+Repräsentiert einen Snack- oder Getränkeautomaten.
+
+**Attribute:**
+- `machine_id: str`
+- `location: str`
+- `assigned_employee: str`
+- `active: bool`
 
 ---
 
