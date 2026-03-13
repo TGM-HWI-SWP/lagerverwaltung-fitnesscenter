@@ -99,121 +99,83 @@ Repräsentiert einen Snack- oder Getränkeautomaten.
 
 ## 2. RepositoryPorts
 
-### 2.1 MemberRepositoryPort
-
-**Verantwortlich:** Rolle 1 / Rolle 2
-
-### Beschreibung
-Abstrakte Schnittstelle für die Persistenz von Mitgliedern.
-
-### Methoden
-
-#### `save_member(member: Member) -> None`
-Speichert ein Mitglied.
-
-**Parameter:**
-- `member`: Member-Instanz
-
-**Exceptions:**
-- Keine
-
-**Implementierungen:**
-- `InMemoryMemberRepository` (v0.1)
-- `SupabaseMemberRepository` (geplant)
+RepositoryPorts definieren die Schnittstellen zur Datenpersistenz.
 
 ---
 
-#### `load_member(member_id: str) -> Member | None`
-Lädt ein einzelnes Mitglied.
+### ProductRepositoryPort
 
-**Parameter:**
-- `member_id`: Eindeutige Mitglieds-ID
+Speichert und lädt Produkte.
 
-**Return:**
-- `Member` oder `None`, falls nicht gefunden
+Methoden:
 
-**Implementierungen:**
-- `InMemoryMemberRepository` (v0.1)
-- `SupabaseMemberRepository` (geplant)
+- `save_product(product: Product) -> None`
+- `load_product(product_id: str) -> Product | None`
+- `load_all_products() -> list[Product]`
+- `delete_product(product_id: str) -> None`
 
 ---
 
-#### `load_all_members() -> list[Member]`
-Lädt alle Mitglieder.
+### MovementRepositoryPort
 
-**Return:**
-- Liste aller Member-Objekte
+Speichert Lagerbewegungen.
 
-**Implementierungen:**
-- `InMemoryMemberRepository` (v0.1)
-- `SupabaseMemberRepository` (geplant)
+Methoden:
 
----
-
-#### `delete_member(member_id: str) -> None`
-Löscht ein Mitglied.
-
-**Parameter:**
-- `member_id`: Eindeutige Mitglieds-ID
-
-**Exceptions:**
-- Keine
-
-**Implementierungen:**
-- `InMemoryMemberRepository` (v0.1)
-- `SupabaseMemberRepository` (geplant)
+- `save_movement(movement: Movement) -> None`
+- `load_movements() -> list[Movement]`
 
 ---
 
-### 2.2 MembershipRepositoryPort
+### MemberRepositoryPort
 
-**Verantwortlich:** Rolle 1 / Rolle 2
+Speichert Mitglieder.
 
-### Beschreibung
-Abstrakte Schnittstelle für die Persistenz von Mitgliedschaften.
+Methoden:
 
-### Methoden
-
-#### `save_membership(membership: Membership) -> None`
-Speichert eine Mitgliedschaft.
-
-#### `load_membership(membership_id: str) -> Membership | None`
-Lädt eine einzelne Mitgliedschaft.
-
-#### `load_all_memberships() -> list[Membership]`
-Lädt alle Mitgliedschaften.
-
-#### `delete_membership(membership_id: str) -> None`
-Löscht eine Mitgliedschaft.
-
-**Implementierungen:**
-- `InMemoryMembershipRepository` (v0.1)
-- `SupabaseMembershipRepository` (geplant)
+- `save_member(member: Member) -> None`
+- `load_member(member_id: str) -> Member | None`
+- `load_all_members() -> list[Member]`
+- `delete_member(member_id: str) -> None`
 
 ---
 
-### 2.3 CheckInRepositoryPort
+### EmployeeRepositoryPort
 
-**Verantwortlich:** Rolle 1 / Rolle 2
+Speichert Mitarbeiter.
 
-### Beschreibung
-Abstrakte Schnittstelle für die Persistenz von Check-ins.
+Methoden:
 
-### Methoden
+- `save_employee(employee: Employee) -> None`
+- `load_employee(employee_id: str) -> Employee | None`
+- `load_all_employees() -> list[Employee]`
+- `delete_employee(employee_id: str) -> None`
 
-#### `save_checkin(checkin: CheckIn) -> None`
-Speichert einen Check-in.
+---
 
-#### `load_all_checkins() -> list[CheckIn]`
-Lädt alle Check-ins.
+### EquipmentRepositoryPort
 
-#### `load_checkins_by_member(member_id: str) -> list[CheckIn]`
-Lädt alle Check-ins eines bestimmten Mitglieds.
+Speichert Fitnessgeräte.
 
-**Implementierungen:**
-- `InMemoryCheckInRepository` (v0.1)
-- `SupabaseCheckInRepository` (geplant)
+Methoden:
 
+- `save_equipment(equipment: Equipment) -> None`
+- `load_equipment(equipment_id: str) -> Equipment | None`
+- `load_all_equipment() -> list[Equipment]`
+- `delete_equipment(equipment_id: str) -> None`
+
+---
+
+### VendingMachineRepositoryPort
+
+Speichert Automaten.
+
+Methoden:
+
+- `save_machine(machine: VendingMachine) -> None`
+- `load_machine(machine_id: str) -> VendingMachine | None`
+- `load_all_machines() -> list[VendingMachine]`
+- `delete_machine(machine_id: str) -> None`
 ---
 
 ## 3. FitnessCenterService
