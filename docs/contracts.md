@@ -225,87 +225,30 @@ Service-Klasse für die zentrale Businesslogik.
 
 ## 4. ReportPort
 
-**Verantwortlich:** Rolle 2 / spätere Integration
-
-### Beschreibung
-Abstrakte Schnittstelle für die Generierung von Reports auf Basis gespeicherter Daten.
-
-Da das Projekt derzeit ohne Report B weitergeführt wird, wird zunächst nur **Report A** berücksichtigt.
+Port für Report-Generierung.
 
 ### Methoden
 
-#### `generate_member_overview() -> list[dict]`
-Generiert eine Übersicht aller Mitglieder.
+`generate_inventory_report() -> list[dict]`
 
-**Return:**
-- Liste von Dictionaries mit z. B.:
-  - `member_id`
-  - `full_name`
-  - `membership_name`
-  - `active`
+Generiert eine Übersicht aller Produkte und deren Bestand.
 
-**Implementierungen:**
-- `MemberOverviewReportAdapter` (geplant)
+Beispiel:
+
+- product_id
+- name
+- quantity
+- price
 
 ---
 
-#### `generate_active_members_report() -> list[dict]`
-Generiert eine Übersicht aktiver Mitglieder.
+`generate_equipment_status_report() -> list[dict]`
 
-**Return:**
-- Liste aktiver Mitglieder
+Übersicht über den Status aller Fitnessgeräte.
 
-**Implementierungen:**
-- `MemberOverviewReportAdapter` (optional)
+Beispiel:
 
----
-
-## 5. GUI-Verwendung der Contracts
-
-Die GUI greift nicht direkt auf die Datenbank zu.
-
-Die GUI verwendet folgende Services:
-
-- `FitnessCenterService`
-- `ReportPort`
-
-Mögliche GUI-Funktionen:
-
-- Mitglied anlegen
-- Mitglieder anzeigen
-- Mitgliedschaft zuweisen
-- Check-in erfassen
-- Report A anzeigen
-
-Dadurch bleibt die Anwendung:
-
-- klar strukturiert
-- testbar
-- wartbar
-
----
-
-## 6. Architekturregel
-
-Die Kommunikation zwischen den Komponenten erfolgt nach folgendem Prinzip:
-
-`GUI -> Service -> Repository -> Datenbank`
-
-Zusätzliche Regeln:
-
-- Die GUI enthält keine direkte Datenbanklogik
-- Die Businesslogik greift nur über RepositoryPorts auf Daten zu
-- Reports basieren auf gespeicherten Daten
-- Persistenzadapter können ausgetauscht werden, ohne die Businesslogik zu ändern
-
----
-
-## Versionshistorie der Contracts
-
-### v0.1
-- Umstellung der Contracts von Lagerverwaltung auf Fitnesscenter
-- Einführung der Domänenobjekte `Member`, `Membership` und `CheckIn`
-- Definition der RepositoryPorts für Mitglieder, Mitgliedschaften und Check-ins
-- Definition des zentralen `FitnessCenterService`
-- Definition eines ersten Report-Contracts für Report A
-- Ergänzung der GUI-Nutzung und Architekturregeln
+- equipment_id
+- name
+- status
+- location
