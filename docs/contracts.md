@@ -52,8 +52,6 @@ Repräsentiert einen Check-in eines Mitglieds.
 
 ---
 
----
-
 ## 2. RepositoryPorts
 
 ### 2.1 MemberRepositoryPort
@@ -173,8 +171,6 @@ Lädt alle Check-ins eines bestimmten Mitglieds.
 
 ---
 
----
-
 ## 3. FitnessCenterService
 
 **Verantwortlich:** Rolle 2 (Businesslogik)
@@ -288,8 +284,6 @@ Lädt alle Check-ins eines Mitglieds.
 
 ---
 
----
-
 ## 4. ReportPort
 
 **Verantwortlich:** Rolle 2 / spätere Integration
@@ -324,3 +318,55 @@ Generiert eine Übersicht aktiver Mitglieder.
 
 **Implementierungen:**
 - `MemberOverviewReportAdapter` (optional)
+
+---
+
+## 5. GUI-Verwendung der Contracts
+
+Die GUI greift nicht direkt auf die Datenbank zu.
+
+Die GUI verwendet folgende Services:
+
+- `FitnessCenterService`
+- `ReportPort`
+
+Mögliche GUI-Funktionen:
+
+- Mitglied anlegen
+- Mitglieder anzeigen
+- Mitgliedschaft zuweisen
+- Check-in erfassen
+- Report A anzeigen
+
+Dadurch bleibt die Anwendung:
+
+- klar strukturiert
+- testbar
+- wartbar
+
+---
+
+## 6. Architekturregel
+
+Die Kommunikation zwischen den Komponenten erfolgt nach folgendem Prinzip:
+
+`GUI -> Service -> Repository -> Datenbank`
+
+Zusätzliche Regeln:
+
+- Die GUI enthält keine direkte Datenbanklogik
+- Die Businesslogik greift nur über RepositoryPorts auf Daten zu
+- Reports basieren auf gespeicherten Daten
+- Persistenzadapter können ausgetauscht werden, ohne die Businesslogik zu ändern
+
+---
+
+## Versionshistorie der Contracts
+
+### v0.1
+- Umstellung der Contracts von Lagerverwaltung auf Fitnesscenter
+- Einführung der Domänenobjekte `Member`, `Membership` und `CheckIn`
+- Definition der RepositoryPorts für Mitglieder, Mitgliedschaften und Check-ins
+- Definition des zentralen `FitnessCenterService`
+- Definition eines ersten Report-Contracts für Report A
+- Ergänzung der GUI-Nutzung und Architekturregeln
