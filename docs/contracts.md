@@ -180,114 +180,46 @@ Methoden:
 
 ## 3. FitnessCenterService
 
-**Verantwortlich:** Rolle 2 (Businesslogik)
+Service-Klasse für die zentrale Businesslogik.
 
-### Beschreibung
-Service-Klasse für die zentrale Businesslogik des Fitnesscenter-Projekts.
+### Member Management
 
-### Methoden
-
-#### `create_member(first_name: str, last_name: str, birth_date: str) -> Member`
-Erstellt ein neues Mitglied.
-
-**Parameter:**
-- `first_name: str` - Vorname
-- `last_name: str` - Nachname
-- `birth_date: str` - Geburtsdatum
-
-**Return:**
-- Neue `Member`-Instanz
-
-**Exceptions:**
-- `ValueError`: Bei ungültigen Eingaben
+- `create_member(first_name: str, last_name: str, birth_date: str) -> Member`
+- `get_member(member_id: str) -> Member | None`
+- `get_all_members() -> list[Member]`
+- `deactivate_member(member_id: str) -> None`
 
 ---
 
-#### `get_member(member_id: str) -> Member | None`
-Lädt ein einzelnes Mitglied.
+### Employee Management
 
-**Parameter:**
-- `member_id: str`
-
-**Return:**
-- `Member` oder `None`
+- `create_employee(first_name: str, last_name: str, role: str) -> Employee`
+- `get_all_employees() -> list[Employee]`
 
 ---
 
-#### `get_all_members() -> list[Member]`
-Lädt alle Mitglieder.
+### Product Management
 
-**Return:**
-- Liste aller `Member`-Objekte
-
----
-
-#### `assign_membership(member_id: str, membership_id: str) -> None`
-Weist einem Mitglied eine Mitgliedschaft zu.
-
-**Parameter:**
-- `member_id: str`
-- `membership_id: str`
-
-**Exceptions:**
-- `ValueError`: Wenn Mitglied oder Mitgliedschaft nicht existiert
+- `create_product(name: str, description: str, price: float) -> Product`
+- `add_stock(product_id: str, quantity: int) -> None`
+- `remove_stock(product_id: str, quantity: int) -> None`
+- `get_all_products() -> list[Product]`
 
 ---
 
-#### `deactivate_member(member_id: str) -> None`
-Deaktiviert ein Mitglied.
+### Equipment Management
 
-**Parameter:**
-- `member_id: str`
-
-**Exceptions:**
-- `ValueError`: Wenn Mitglied nicht existiert
+- `create_equipment(name: str, type: str, location: str) -> Equipment`
+- `update_equipment_status(equipment_id: str, status: str) -> None`
+- `get_all_equipment() -> list[Equipment]`
 
 ---
 
-#### `create_membership(name: str, price_per_month: float, duration_months: int) -> Membership`
-Erstellt eine neue Mitgliedschaft.
+### Vending Machine Management
 
-**Parameter:**
-- `name: str`
-- `price_per_month: float`
-- `duration_months: int`
-
-**Return:**
-- Neue `Membership`-Instanz
-
-**Exceptions:**
-- `ValueError`: Bei ungültigen Eingaben
-
----
-
-#### `get_all_memberships() -> list[Membership]`
-Lädt alle Mitgliedschaften.
-
-**Return:**
-- Liste aller `Membership`-Objekte
-
----
-
-#### `check_in_member(member_id: str) -> CheckIn`
-Erfasst einen Check-in für ein Mitglied.
-
-**Parameter:**
-- `member_id: str`
-
-**Return:**
-- Neue `CheckIn`-Instanz
-
-**Exceptions:**
-- `ValueError`: Wenn Mitglied nicht existiert oder inaktiv ist
-
----
-
-#### `get_checkins_by_member(member_id: str) -> list[CheckIn]`
-Lädt alle Check-ins eines Mitglieds.
-
-**Return:**
-- Liste aller `CheckIn`-Objekte
+- `create_machine(location: str) -> VendingMachine`
+- `assign_employee_to_machine(machine_id: str, employee_id: str) -> None`
+- `get_all_machines() -> list[VendingMachine]`
 
 ---
 
