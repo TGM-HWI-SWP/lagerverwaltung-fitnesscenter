@@ -3,6 +3,7 @@
 from datetime import datetime
 from typing import Dict, List, Optional
 
+from ..domain.member import Member
 from ..domain.product import Product
 from ..domain.warehouse import Movement, Warehouse
 from ..ports import RepositoryPort
@@ -33,6 +34,7 @@ class WarehouseService:
             quantity=initial_quantity,
             category=category,
         )
+
         self.repository.save_product(product)
         self.warehouse.add_product(product)
         return product
@@ -42,6 +44,7 @@ class WarehouseService:
     ) -> None:
         """Bestand erhöhen"""
         product = self.repository.load_product(product_id)
+
         if not product:
             raise ValueError(f"Produkt {product_id} nicht gefunden")
 
@@ -57,13 +60,16 @@ class WarehouseService:
             reason=reason,
             performed_by=user,
         )
+
         self.repository.save_movement(movement)
 
     def remove_from_stock(
         self, product_id: str, quantity: int, reason: str = "", user: str = "system"
     ) -> None:
         """Bestand verringern"""
+
         product = self.repository.load_product(product_id)
+
         if not product:
             raise ValueError(f"Produkt {product_id} nicht gefunden")
 
@@ -84,6 +90,7 @@ class WarehouseService:
             reason=reason,
             performed_by=user,
         )
+
         self.repository.save_movement(movement)
 
     def get_product(self, product_id: str) -> Optional[Product]:
@@ -102,3 +109,43 @@ class WarehouseService:
         """Gesamtwert des Lagerbestands berechnen"""
         products = self.repository.load_all_products()
         return sum(p.get_total_value() for p in products.values())
+
+    def create_member(
+        self,
+        member_id: str,
+        first_name: str,
+        last_name: str,
+        email: str,
+        phone: str = "",
+        membership_type: str = "Standard",
+    ) -> Member:
+        """Neues Mitglied erstellen"""
+        member = Member(
+            id=member_id,
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            phone=phone,
+            membership_type=membership_type,
+        )
+
+        self.repository.save_member(member)
+        return member
+
+    def get_member(self, member_id: str) -> Optional[Member]:
+        """Mitglied abrufen"""
+        return self.repository.load_member(member_id)
+
+    def get_all_members(self) -> Dict[str, Member]:
+        """Alle Mitglieder abrufen"""
+        return self.repository.load_all_members()
+
+    def deactivate_member(self, member_id: str) -> None:
+        """Mitglied deaktivieren"""
+        member = self.repository.load_member(member_id)
+
+        if not member:
+            raise ValueError(f"Member {member_id} nicht gefunden")
+
+        member.deactivate()
+        self.repository.save_member(member)

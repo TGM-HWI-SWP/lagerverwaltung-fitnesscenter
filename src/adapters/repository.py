@@ -4,6 +4,7 @@ from typing import Dict, List, Optional
 
 from ..domain.product import Product
 from ..domain.warehouse import Movement
+from ..domain.member import Member
 from ..ports import RepositoryPort
 from .supabase_repository import SupabaseRepository
 
@@ -14,6 +15,7 @@ class InMemoryRepository(RepositoryPort):
     def __init__(self):
         self.products: Dict[str, Product] = {}
         self.movements: List[Movement] = []
+        self.members: Dict[str, Member] = {}
 
     def save_product(self, product: Product) -> None:
         """Produkt im Memory speichern"""
@@ -39,6 +41,23 @@ class InMemoryRepository(RepositoryPort):
     def load_movements(self) -> List[Movement]:
         """Alle Bewegungen aus Memory laden"""
         return self.movements.copy()
+
+    def save_member(self, member: Member) -> None:
+        """Mitglied im Memory speichern"""
+        self.members[member.id] = member
+
+    def load_member(self, member_id: str) -> Optional[Member]:
+        """Mitglied aus Memory laden"""
+        return self.members.get(member_id)
+
+    def load_all_members(self) -> Dict[str, Member]:
+        """Alle Mitglieder aus Memory laden"""
+        return self.members.copy()
+
+    def delete_member(self, member_id: str) -> None:
+        """Mitglied aus Memory löschen"""
+        if member_id in self.members:
+            del self.members[member_id]
 
 
 class RepositoryFactory:
