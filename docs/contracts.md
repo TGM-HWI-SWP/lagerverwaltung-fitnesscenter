@@ -173,79 +173,118 @@ Lädt alle Check-ins eines bestimmten Mitglieds.
 
 ---
 
-## 3. WarehouseService
+---
+
+## 3. FitnessCenterService
 
 **Verantwortlich:** Rolle 2 (Businesslogik)
 
 ### Beschreibung
-Service-Klasse für zentrale Lagerverwaltungslogik.
+Service-Klasse für die zentrale Businesslogik des Fitnesscenter-Projekts.
 
 ### Methoden
 
-#### `create_product(...) -> Product`
-Erstellt ein neues Produkt.
+#### `create_member(first_name: str, last_name: str, birth_date: str) -> Member`
+Erstellt ein neues Mitglied.
 
 **Parameter:**
-- `product_id: str` - Eindeutige ID
-- `name: str` - Produktname
-- `description: str` - Beschreibung
-- `price: float` - Preis
-- `category: str` - Kategorie (optional)
-- `initial_quantity: int` - Anfangsbestand
+- `first_name: str` - Vorname
+- `last_name: str` - Nachname
+- `birth_date: str` - Geburtsdatum
 
 **Return:**
-- Neue Product-Instanz
+- Neue `Member`-Instanz
 
 **Exceptions:**
 - `ValueError`: Bei ungültigen Eingaben
 
-#### `add_to_stock(product_id: str, quantity: int, reason: str, user: str) -> None`
-Erhöht den Bestand.
+---
+
+#### `get_member(member_id: str) -> Member | None`
+Lädt ein einzelnes Mitglied.
 
 **Parameter:**
-- `product_id: str`
-- `quantity: int` - Menge
-- `reason: str` - Grund (optional)
-- `user: str` - Benutzer (default: "system")
+- `member_id: str`
 
-**Exceptions:**
-- `ValueError`: Wenn Produkt nicht existiert
+**Return:**
+- `Member` oder `None`
 
-#### `remove_from_stock(product_id: str, quantity: int, reason: str, user: str) -> None`
-Verringert den Bestand.
+---
+
+#### `get_all_members() -> list[Member]`
+Lädt alle Mitglieder.
+
+**Return:**
+- Liste aller `Member`-Objekte
+
+---
+
+#### `assign_membership(member_id: str, membership_id: str) -> None`
+Weist einem Mitglied eine Mitgliedschaft zu.
 
 **Parameter:**
-- `product_id: str`
-- `quantity: int` - Menge
-- `reason: str` - Grund (optional)
-- `user: str` - Benutzer (default: "system")
+- `member_id: str`
+- `membership_id: str`
 
 **Exceptions:**
-- `ValueError`: Wenn Bestand unzureichend oder Produkt nicht existiert
+- `ValueError`: Wenn Mitglied oder Mitgliedschaft nicht existiert
 
-#### `get_product(product_id: str) -> Optional[Product]`
-Ruft ein einzelnes Produkt ab.
+---
+
+#### `deactivate_member(member_id: str) -> None`
+Deaktiviert ein Mitglied.
+
+**Parameter:**
+- `member_id: str`
+
+**Exceptions:**
+- `ValueError`: Wenn Mitglied nicht existiert
+
+---
+
+#### `create_membership(name: str, price_per_month: float, duration_months: int) -> Membership`
+Erstellt eine neue Mitgliedschaft.
+
+**Parameter:**
+- `name: str`
+- `price_per_month: float`
+- `duration_months: int`
 
 **Return:**
-- Product oder None
+- Neue `Membership`-Instanz
 
-#### `get_all_products() -> Dict[str, Product]`
-Ruft alle Produkte ab.
+**Exceptions:**
+- `ValueError`: Bei ungültigen Eingaben
 
-**Return:**
-- Dictionary mit allen Produkten
+---
 
-#### `get_movements() -> List[Movement]`
-Ruft alle Lagerbewegungen ab.
-
-**Return:**
-- Liste aller Movements
-
-#### `get_total_inventory_value() -> float`
-Berechnet den Gesamtwert des Lagers.
+#### `get_all_memberships() -> list[Membership]`
+Lädt alle Mitgliedschaften.
 
 **Return:**
-- Wert in Euro
+- Liste aller `Membership`-Objekte
+
+---
+
+#### `check_in_member(member_id: str) -> CheckIn`
+Erfasst einen Check-in für ein Mitglied.
+
+**Parameter:**
+- `member_id: str`
+
+**Return:**
+- Neue `CheckIn`-Instanz
+
+**Exceptions:**
+- `ValueError`: Wenn Mitglied nicht existiert oder inaktiv ist
+
+---
+
+#### `get_checkins_by_member(member_id: str) -> list[CheckIn]`
+Lädt alle Check-ins eines Mitglieds.
+
+**Return:**
+- Liste aller `CheckIn`-Objekte
 
 ---
 
