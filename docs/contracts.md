@@ -1,5 +1,3 @@
-# Schnittstellen-Dokumentation (Contracts)
-
 ## Übersicht
 
 # Schnittstellen-Dokumentation (Contracts)
@@ -252,3 +250,65 @@ Beispiel:
 - name
 - status
 - location
+
+---
+
+## 5. GUI-Verwendung der Contracts
+
+Die grafische Benutzeroberfläche (GUI) greift nicht direkt auf die Datenbank zu.
+
+Die GUI kommuniziert ausschließlich über die Businesslogik.
+
+Verwendete Komponenten:
+
+- `FitnessCenterService`
+- `ReportPort`
+
+Typische GUI-Funktionen:
+
+- Produkte anzeigen
+- Produkte zum Lager hinzufügen oder entfernen
+- Mitglieder anzeigen
+- Mitarbeiter verwalten
+- Geräte anzeigen
+- Automaten verwalten
+- Reports anzeigen
+
+Dadurch bleibt die Anwendung:
+
+- klar strukturiert
+- testbar
+- wartbar
+
+---
+
+## 6. Architekturregel
+
+Die Kommunikation zwischen den Komponenten erfolgt nach folgendem Prinzip:
+
+`GUI -> Service -> Repository -> Datenbank`
+
+Zusätzliche Regeln:
+
+- Die GUI enthält keine direkte Datenbanklogik.
+- Die Businesslogik greift nur über RepositoryPorts auf Daten zu.
+- Persistenzadapter können ausgetauscht werden, ohne die Businesslogik zu verändern.
+- Reports basieren auf gespeicherten Daten aus den Repositories.
+
+---
+
+## Versionshistorie der Contracts
+
+### v0.2
+- Erweiterung der Domänenmodelle um:
+  - Product
+  - Movement
+  - Employee
+  - Equipment
+  - VendingMachine
+- Anpassung der RepositoryPorts
+- Erweiterung des FitnessCenterService
+- Definition der ReportPorts für Lager und Geräte
+
+### v0.1
+- Erste Version der Contracts-Struktur
