@@ -1,7 +1,7 @@
 from typing import Protocol, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from src.domain.movement import Movement
+    from src.domain.warehouse import Movement
 
 
 class MovementRepositoryPort(Protocol):
