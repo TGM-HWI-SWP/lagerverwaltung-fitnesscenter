@@ -5,6 +5,7 @@ from typing import Dict, List, Optional
 from ..domain.product import Product
 from ..domain.warehouse import Movement
 from ..ports import RepositoryPort
+from .supabase_repository import SupabaseRepository
 
 
 class InMemoryRepository(RepositoryPort):
@@ -49,12 +50,17 @@ class RepositoryFactory:
         Repository basierend auf Typ erstellen
 
         Args:
-            repository_type: "memory" oder andere (z.B. "sqlite", "json")
+            repository_type: "memory" oder "supabase"
 
         Returns:
             RepositoryPort Instanz
         """
+
         if repository_type == "memory":
             return InMemoryRepository()
+
+        elif repository_type == "supabase":
+            return SupabaseRepository()
+
         else:
             raise ValueError(f"Unbekannter Repository-Typ: {repository_type}")
