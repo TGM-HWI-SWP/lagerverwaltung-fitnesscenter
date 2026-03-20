@@ -1,8 +1,8 @@
-## Übersicht
-
 # Schnittstellen-Dokumentation (Contracts)
 
-Diese Datei dokumentiert die zentralen Schnittstellen des Projekts **Fitnesscenter**.
+## Übersicht
+
+Diese Datei dokumentiert die zentralen Schnittstellen des Projekts **Fitnesscenter**.  
 Sie wird von **Rolle 1 (Contract Owner)** gepflegt und bei Änderungen an Architektur, Services, Repositories oder Reports aktualisiert.
 
 Die Contracts definieren, wie die einzelnen Komponenten miteinander kommunizieren:
@@ -52,8 +52,16 @@ Repräsentiert ein Mitglied des Fitnesscenters.
 - `member_id: str`
 - `first_name: str`
 - `last_name: str`
-- `birth_date: str`
+- `email: str`
+- `phone: str`
+- `membership_type: str`
 - `active: bool`
+- `created_at: datetime`
+
+**Methoden:**
+- `deactivate() -> None`
+- `activate() -> None`
+- `full_name() -> str`
 
 ---
 
@@ -66,7 +74,15 @@ Repräsentiert einen Mitarbeiter des Fitnesscenters.
 - `first_name: str`
 - `last_name: str`
 - `role: str`
+- `email: str`
+- `phone: str`
 - `active: bool`
+- `created_at: datetime`
+
+**Methoden:**
+- `deactivate() -> None`
+- `activate() -> None`
+- `full_name() -> str`
 
 ---
 
@@ -77,9 +93,15 @@ Repräsentiert ein Fitnessgerät.
 **Attribute:**
 - `equipment_id: str`
 - `name: str`
-- `type: str`
-- `status: str`
+- `equipment_type: str`
 - `location: str`
+- `status: str`
+- `assigned_employee_id: str`
+- `created_at: datetime`
+
+**Methoden:**
+- `set_status(status: str) -> None`
+- `assign_employee(employee_id: str) -> None`
 
 ---
 
@@ -90,8 +112,15 @@ Repräsentiert einen Snack- oder Getränkeautomaten.
 **Attribute:**
 - `machine_id: str`
 - `location: str`
-- `assigned_employee: str`
+- `machine_type: str`
+- `assigned_employee_id: str`
 - `active: bool`
+- `created_at: datetime`
+
+**Methoden:**
+- `deactivate() -> None`
+- `activate() -> None`
+- `assign_employee(employee_id: str) -> None`
 
 ---
 
@@ -105,8 +134,7 @@ RepositoryPorts definieren die Schnittstellen zur Datenpersistenz.
 
 Speichert und lädt Produkte.
 
-Methoden:
-
+**Methoden:**
 - `save_product(product: Product) -> None`
 - `load_product(product_id: str) -> Product | None`
 - `load_all_products() -> list[Product]`
@@ -118,8 +146,7 @@ Methoden:
 
 Speichert Lagerbewegungen.
 
-Methoden:
-
+**Methoden:**
 - `save_movement(movement: Movement) -> None`
 - `load_movements() -> list[Movement]`
 
@@ -129,8 +156,7 @@ Methoden:
 
 Speichert Mitglieder.
 
-Methoden:
-
+**Methoden:**
 - `save_member(member: Member) -> None`
 - `load_member(member_id: str) -> Member | None`
 - `load_all_members() -> list[Member]`
@@ -142,8 +168,7 @@ Methoden:
 
 Speichert Mitarbeiter.
 
-Methoden:
-
+**Methoden:**
 - `save_employee(employee: Employee) -> None`
 - `load_employee(employee_id: str) -> Employee | None`
 - `load_all_employees() -> list[Employee]`
@@ -155,8 +180,7 @@ Methoden:
 
 Speichert Fitnessgeräte.
 
-Methoden:
-
+**Methoden:**
 - `save_equipment(equipment: Equipment) -> None`
 - `load_equipment(equipment_id: str) -> Equipment | None`
 - `load_all_equipment() -> list[Equipment]`
@@ -168,12 +192,12 @@ Methoden:
 
 Speichert Automaten.
 
-Methoden:
-
+**Methoden:**
 - `save_machine(machine: VendingMachine) -> None`
 - `load_machine(machine_id: str) -> VendingMachine | None`
 - `load_all_machines() -> list[VendingMachine]`
 - `delete_machine(machine_id: str) -> None`
+
 ---
 
 ## 3. FitnessCenterService
@@ -182,42 +206,61 @@ Service-Klasse für die zentrale Businesslogik.
 
 ### Member Management
 
-- `create_member(first_name: str, last_name: str, birth_date: str) -> Member`
+- `create_member(member_id: str, first_name: str, last_name: str, email: str, phone: str = "", membership_type: str = "Standard") -> Member`
 - `get_member(member_id: str) -> Member | None`
 - `get_all_members() -> list[Member]`
 - `deactivate_member(member_id: str) -> None`
+- `activate_member(member_id: str) -> None`
 
 ---
 
 ### Employee Management
 
-- `create_employee(first_name: str, last_name: str, role: str) -> Employee`
+- `create_employee(employee_id: str, first_name: str, last_name: str, role: str, email: str, phone: str = "") -> Employee`
+- `get_employee(employee_id: str) -> Employee | None`
 - `get_all_employees() -> list[Employee]`
+- `deactivate_employee(employee_id: str) -> None`
+- `activate_employee(employee_id: str) -> None`
 
 ---
 
 ### Product Management
 
-- `create_product(name: str, description: str, price: float) -> Product`
-- `add_stock(product_id: str, quantity: int) -> None`
-- `remove_stock(product_id: str, quantity: int) -> None`
+- `create_product(product_id: str, name: str, description: str, price: float, quantity: int, category: str) -> Product`
+- `get_product(product_id: str) -> Product | None`
 - `get_all_products() -> list[Product]`
+- `add_stock(product_id: str, quantity: int, performed_by: str) -> None`
+- `remove_stock(product_id: str, quantity: int, performed_by: str) -> None`
+- `delete_product(product_id: str) -> None`
 
 ---
 
 ### Equipment Management
 
-- `create_equipment(name: str, type: str, location: str) -> Equipment`
-- `update_equipment_status(equipment_id: str, status: str) -> None`
+- `create_equipment(equipment_id: str, name: str, equipment_type: str, location: str, status: str = "available") -> Equipment`
+- `get_equipment(equipment_id: str) -> Equipment | None`
 - `get_all_equipment() -> list[Equipment]`
+- `update_equipment_status(equipment_id: str, status: str) -> None`
+- `assign_employee_to_equipment(equipment_id: str, employee_id: str) -> None`
+- `delete_equipment(equipment_id: str) -> None`
 
 ---
 
 ### Vending Machine Management
 
-- `create_machine(location: str) -> VendingMachine`
-- `assign_employee_to_machine(machine_id: str, employee_id: str) -> None`
+- `create_machine(machine_id: str, location: str, machine_type: str) -> VendingMachine`
+- `get_machine(machine_id: str) -> VendingMachine | None`
 - `get_all_machines() -> list[VendingMachine]`
+- `assign_employee_to_machine(machine_id: str, employee_id: str) -> None`
+- `activate_machine(machine_id: str) -> None`
+- `deactivate_machine(machine_id: str) -> None`
+- `delete_machine(machine_id: str) -> None`
+
+---
+
+### Movement Management
+
+- `get_movements() -> list[Movement]`
 
 ---
 
@@ -227,29 +270,30 @@ Port für Report-Generierung.
 
 ### Methoden
 
-`generate_inventory_report() -> list[dict]`
+#### `generate_inventory_report() -> list[dict]`
 
 Generiert eine Übersicht aller Produkte und deren Bestand.
 
-Beispiel:
-
-- product_id
-- name
-- quantity
-- price
+**Beispiel-Ausgabe:**
+- `product_id`
+- `name`
+- `quantity`
+- `price`
+- `category`
 
 ---
 
-`generate_equipment_status_report() -> list[dict]`
+#### `generate_equipment_status_report() -> list[dict]`
 
-Übersicht über den Status aller Fitnessgeräte.
+Generiert eine Übersicht über den Status aller Fitnessgeräte.
 
-Beispiel:
-
-- equipment_id
-- name
-- status
-- location
+**Beispiel-Ausgabe:**
+- `equipment_id`
+- `name`
+- `equipment_type`
+- `status`
+- `location`
+- `assigned_employee_id`
 
 ---
 
@@ -259,13 +303,11 @@ Die grafische Benutzeroberfläche (GUI) greift nicht direkt auf die Datenbank zu
 
 Die GUI kommuniziert ausschließlich über die Businesslogik.
 
-Verwendete Komponenten:
-
+**Verwendete Komponenten:**
 - `FitnessCenterService`
 - `ReportPort`
 
-Typische GUI-Funktionen:
-
+**Typische GUI-Funktionen:**
 - Produkte anzeigen
 - Produkte zum Lager hinzufügen oder entfernen
 - Mitglieder anzeigen
@@ -288,8 +330,7 @@ Die Kommunikation zwischen den Komponenten erfolgt nach folgendem Prinzip:
 
 `GUI -> Service -> Repository -> Datenbank`
 
-Zusätzliche Regeln:
-
+**Zusätzliche Regeln:**
 - Die GUI enthält keine direkte Datenbanklogik.
 - Die Businesslogik greift nur über RepositoryPorts auf Daten zu.
 - Persistenzadapter können ausgetauscht werden, ohne die Businesslogik zu verändern.
@@ -298,6 +339,15 @@ Zusätzliche Regeln:
 ---
 
 ## Versionshistorie der Contracts
+
+### v0.3
+- Abgleich der Contracts mit den aktuellen Domain-Modellen
+- Ergänzung von `email`, `phone`, `membership_type` und `created_at` bei `Member`
+- Ergänzung von `email`, `phone` und `created_at` bei `Employee`
+- Umbenennung von `type` zu `equipment_type`
+- Ergänzung von `assigned_employee_id` und `created_at` bei `Equipment`
+- Ergänzung von `machine_type`, `assigned_employee_id` und `created_at` bei `VendingMachine`
+- Erweiterung der Service-Schnittstellen passend zum aktuellen Code-Stand
 
 ### v0.2
 - Erweiterung der Domänenmodelle um:
