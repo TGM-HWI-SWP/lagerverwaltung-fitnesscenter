@@ -1,107 +1,55 @@
+from __future__ import annotations
+
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QFrame,
     QGridLayout,
-    QHBoxLayout,
     QLabel,
-    QPushButton,
     QVBoxLayout,
     QWidget,
 )
 
 
+# ---------------------------
+# STAT CARD (WIEDERVERWENDBAR)
+# ---------------------------
 class StatCard(QFrame):
-    """Kleine Statistik-Karte für das Dashboard."""
+    """Moderne Statistik-Karte für Dashboard."""
 
-    def __init__(self, title: str, value: str, description: str) -> None:
+    def __init__(self, title: str, value: str, subtitle: str = "") -> None:
         super().__init__()
+
         self.setObjectName("statCard")
-        self.setMinimumHeight(140)
+        self.setMinimumHeight(120)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(18, 18, 18, 18)
-        layout.setSpacing(8)
+        layout.setContentsMargins(18, 14, 18, 14)
+        layout.setSpacing(6)
 
         self.title_label = QLabel(title)
-        self.title_label.setObjectName("statCardTitle")
+        self.title_label.setObjectName("statTitle")
 
         self.value_label = QLabel(value)
-        self.value_label.setObjectName("statCardValue")
+        self.value_label.setObjectName("statValue")
 
-        self.description_label = QLabel(description)
-        self.description_label.setObjectName("statCardDescription")
-        self.description_label.setWordWrap(True)
+        self.subtitle_label = QLabel(subtitle)
+        self.subtitle_label.setObjectName("statSubtitle")
 
         layout.addWidget(self.title_label)
         layout.addWidget(self.value_label)
-        layout.addWidget(self.description_label)
-        layout.addStretch()
+        layout.addWidget(self.subtitle_label)
 
 
-class InfoPanel(QFrame):
-    """Allgemeines Info-Panel für Hinweise oder Schnellinfos."""
-
-    def __init__(self, title: str, lines: list[str]) -> None:
-        super().__init__()
-        self.setObjectName("infoPanel")
-
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(18, 18, 18, 18)
-        layout.setSpacing(10)
-
-        title_label = QLabel(title)
-        title_label.setObjectName("infoPanelTitle")
-        layout.addWidget(title_label)
-
-        for line in lines:
-            line_label = QLabel(f"• {line}")
-            line_label.setObjectName("infoPanelText")
-            line_label.setWordWrap(True)
-            layout.addWidget(line_label)
-
-        layout.addStretch()
-
-
-class QuickActionPanel(QFrame):
-    """Panel für schnelle Aktionen auf dem Dashboard."""
-
-    def __init__(self) -> None:
-        super().__init__()
-        self.setObjectName("quickActionPanel")
-
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(18, 18, 18, 18)
-        layout.setSpacing(14)
-
-        title_label = QLabel("Schnellaktionen")
-        title_label.setObjectName("infoPanelTitle")
-        layout.addWidget(title_label)
-
-        button_row = QHBoxLayout()
-        button_row.setSpacing(12)
-
-        self.add_item_button = QPushButton("Artikel hinzufügen")
-        self.add_item_button.setObjectName("primaryButton")
-
-        self.stock_button = QPushButton("Bestand ändern")
-        self.stock_button.setObjectName("secondaryButton")
-
-        self.report_button = QPushButton("Report öffnen")
-        self.report_button.setObjectName("secondaryButton")
-
-        button_row.addWidget(self.add_item_button)
-        button_row.addWidget(self.stock_button)
-        button_row.addWidget(self.report_button)
-
-        layout.addLayout(button_row)
-        layout.addStretch()
-
-
+# ---------------------------
+# DASHBOARD PAGE
+# ---------------------------
 class DashboardPage(QWidget):
-    """Dashboard-Startseite der Anwendung."""
+    """Dashboard mit Übersicht über das gesamte System."""
 
-    def __init__(self) -> None:
+    def __init__(self, controller=None) -> None:
         super().__init__()
+        self.controller = controller
+
         self._create_ui()
 
     def _create_ui(self) -> None:
@@ -109,108 +57,69 @@ class DashboardPage(QWidget):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(20)
 
-        header_widget = self._create_header_section()
-        stats_widget = self._create_stats_section()
-        lower_widget = self._create_lower_section()
+        # Titel
+        title = QLabel("Übersicht")
+        title.setObjectName("dashboardTitle")
 
-        main_layout.addWidget(header_widget)
-        main_layout.addWidget(stats_widget)
-        main_layout.addWidget(lower_widget)
-        main_layout.addStretch()
+        subtitle = QLabel("Alle wichtigen Kennzahlen auf einen Blick")
+        subtitle.setObjectName("dashboardSubtitle")
 
-    def _create_header_section(self) -> QWidget:
-        """Erstellt den oberen Begrüßungsbereich."""
-        header = QFrame()
-        header.setObjectName("dashboardHeader")
-        header.setMinimumHeight(150)
+        main_layout.addWidget(title)
+        main_layout.addWidget(subtitle)
 
-        layout = QVBoxLayout(header)
-        layout.setContentsMargins(24, 24, 24, 24)
-        layout.setSpacing(8)
+        # Grid für Karten
+        grid = QGridLayout()
+        grid.setSpacing(18)
 
-        welcome_label = QLabel("Willkommen im FitnessGym Lager-Dashboard")
-        welcome_label.setObjectName("dashboardWelcomeLabel")
+        # Erste Reihe
+        self.members_card = StatCard("Mitglieder", "124", "+12 diesen Monat")
+        self.employees_card = StatCard("Mitarbeiter", "18", "Aktiv im System")
+        self.products_card = StatCard("Produkte", "56", "Im Lager verfügbar")
 
-        text_label = QLabel(
-            "Behalte Bestände, Lagerbewegungen und kritische Artikel im Blick."
-        )
-        text_label.setObjectName("dashboardTextLabel")
-        text_label.setWordWrap(True)
+        # Zweite Reihe
+        self.equipment_card = StatCard("Geräte", "32", "Im Einsatz")
+        self.vending_card = StatCard("Automaten", "6", "Aktiv")
+        self.low_stock_card = StatCard("Kritische Bestände", "4", "Sofort prüfen")
 
-        layout.addWidget(welcome_label)
-        layout.addWidget(text_label)
-        layout.addStretch()
+        # Layout setzen
+        grid.addWidget(self.members_card, 0, 0)
+        grid.addWidget(self.employees_card, 0, 1)
+        grid.addWidget(self.products_card, 0, 2)
 
-        return header
+        grid.addWidget(self.equipment_card, 1, 0)
+        grid.addWidget(self.vending_card, 1, 1)
+        grid.addWidget(self.low_stock_card, 1, 2)
 
-    def _create_stats_section(self) -> QWidget:
-        """Erstellt die Statistik-Karten."""
-        widget = QWidget()
-        layout = QGridLayout(widget)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setHorizontalSpacing(16)
-        layout.setVerticalSpacing(16)
+        main_layout.addLayout(grid)
 
-        self.total_items_card = StatCard(
-            "Artikel gesamt",
-            "186",
-            "Gesamte Anzahl aller aktuell verwalteten Lagerartikel.",
-        )
-        self.critical_items_card = StatCard(
-            "Kritische Artikel",
-            "7",
-            "Artikel, die den Mindestbestand erreicht oder unterschritten haben.",
-        )
-        self.total_value_card = StatCard(
-            "Lagerwert",
-            "€ 12.480",
-            "Geschätzter Gesamtwert des aktuellen Lagerbestandes.",
-        )
-        self.movements_today_card = StatCard(
-            "Heutige Bewegungen",
-            "23",
-            "Warenein- und -ausgänge, die heute gebucht wurden.",
-        )
+        # Platz für zukünftige Charts / Tabellen
+        self._create_bottom_section(main_layout)
 
-        layout.addWidget(self.total_items_card, 0, 0)
-        layout.addWidget(self.critical_items_card, 0, 1)
-        layout.addWidget(self.total_value_card, 1, 0)
-        layout.addWidget(self.movements_today_card, 1, 1)
+    def _create_bottom_section(self, layout: QVBoxLayout) -> None:
+        """Unterer Bereich (z. B. Bewegungen, Charts)."""
+        container = QFrame()
+        container.setObjectName("dashboardBottom")
 
-        return widget
+        container_layout = QVBoxLayout(container)
+        container_layout.setContentsMargins(18, 18, 18, 18)
 
-    def _create_lower_section(self) -> QWidget:
-        """Erstellt den unteren Bereich mit Infos und Schnellaktionen."""
-        widget = QWidget()
-        layout = QGridLayout(widget)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setHorizontalSpacing(16)
-        layout.setVerticalSpacing(16)
+        label = QLabel("Letzte Aktivitäten (coming soon)")
+        label.setObjectName("dashboardSectionTitle")
 
-        self.warning_panel = InfoPanel(
-            "Warnungen & Hinweise",
-            [
-                "7 Artikel liegen unter dem Mindestbestand.",
-                "Protein Powder Vanilla muss bald nachbestellt werden.",
-                "Resistance Bands sind fast ausverkauft.",
-                "Nächste Inventur ist für Freitag geplant.",
-            ],
-        )
+        container_layout.addWidget(label)
 
-        self.activity_panel = InfoPanel(
-            "Letzte Aktivitäten",
-            [
-                "08:15 Uhr – Wareneingang für Supplements gebucht.",
-                "09:40 Uhr – 8 Handtücher aus Lager entnommen.",
-                "10:05 Uhr – Reinigungsmittelbestand aktualisiert.",
-                "11:30 Uhr – Report für Nachbestellungen geöffnet.",
-            ],
-        )
+        layout.addWidget(container)
 
-        self.quick_actions_panel = QuickActionPanel()
+    # ---------------------------
+    # SPÄTER: DATEN LADEN
+    # ---------------------------
+    def refresh_data(self) -> None:
+        """Wird vom MainWindow aufgerufen (F5 etc.)."""
+        if not self.controller:
+            return
 
-        layout.addWidget(self.warning_panel, 0, 0)
-        layout.addWidget(self.activity_panel, 0, 1)
-        layout.addWidget(self.quick_actions_panel, 1, 0, 1, 2)
+        # Beispiel (später implementieren)
+        # members = self.controller.get_member_count()
+        # self.members_card.value_label.setText(str(members))
 
-        return widget
+        pass
