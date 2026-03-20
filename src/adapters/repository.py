@@ -127,7 +127,9 @@ class InMemoryVendingMachineRepository(VendingMachineRepositoryPort):
 
 class RepositoryFactory:
     @staticmethod
-    def create_product_repository(repository_type: str = "memory") -> ProductRepositoryPort:
+    def create_product_repository(
+        repository_type: str = "memory",
+    ) -> ProductRepositoryPort:
         if repository_type == "memory":
             return InMemoryProductRepository()
         if repository_type == "supabase":
@@ -135,7 +137,9 @@ class RepositoryFactory:
         raise ValueError(f"Unbekannter Repository-Typ: {repository_type}")
 
     @staticmethod
-    def create_movement_repository(repository_type: str = "memory") -> MovementRepositoryPort:
+    def create_movement_repository(
+        repository_type: str = "memory",
+    ) -> MovementRepositoryPort:
         if repository_type == "memory":
             return InMemoryMovementRepository()
         if repository_type == "supabase":
@@ -143,7 +147,9 @@ class RepositoryFactory:
         raise ValueError(f"Unbekannter Repository-Typ: {repository_type}")
 
     @staticmethod
-    def create_member_repository(repository_type: str = "memory") -> MemberRepositoryPort:
+    def create_member_repository(
+        repository_type: str = "memory",
+    ) -> MemberRepositoryPort:
         if repository_type == "memory":
             return InMemoryMemberRepository()
         if repository_type == "supabase":
@@ -151,7 +157,9 @@ class RepositoryFactory:
         raise ValueError(f"Unbekannter Repository-Typ: {repository_type}")
 
     @staticmethod
-    def create_employee_repository(repository_type: str = "memory") -> EmployeeRepositoryPort:
+    def create_employee_repository(
+        repository_type: str = "memory",
+    ) -> EmployeeRepositoryPort:
         if repository_type == "memory":
             return InMemoryEmployeeRepository()
         if repository_type == "supabase":
@@ -159,7 +167,9 @@ class RepositoryFactory:
         raise ValueError(f"Unbekannter Repository-Typ: {repository_type}")
 
     @staticmethod
-    def create_equipment_repository(repository_type: str = "memory") -> EquipmentRepositoryPort:
+    def create_equipment_repository(
+        repository_type: str = "memory",
+    ) -> EquipmentRepositoryPort:
         if repository_type == "memory":
             return InMemoryEquipmentRepository()
         if repository_type == "supabase":

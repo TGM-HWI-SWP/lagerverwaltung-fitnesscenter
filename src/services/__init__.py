@@ -280,9 +280,7 @@ class FitnessCenterService:
         equipment.set_status(status)
         self.equipment_repository.save_equipment(equipment)
 
-    def assign_employee_to_equipment(
-        self, equipment_id: str, employee_id: str
-    ) -> None:
+    def assign_employee_to_equipment(self, equipment_id: str, employee_id: str) -> None:
         equipment = self.equipment_repository.load_equipment(equipment_id)
         if not equipment:
             raise ValueError(f"Gerät {equipment_id} nicht gefunden")

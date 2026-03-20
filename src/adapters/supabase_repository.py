@@ -21,7 +21,7 @@ from ..ports.vending_machine_repository_port import VendingMachineRepositoryPort
 load_dotenv()
 
 
-def _create_client() -> Client:
+def _create_supabase_client() -> Client:
     url = os.getenv("SUPABASE_URL")
     key = os.getenv("SUPABASE_KEY")
 
@@ -33,7 +33,7 @@ def _create_client() -> Client:
 
 class SupabaseProductRepository(ProductRepositoryPort):
     def __init__(self):
-        self.client = _create_client()
+        self.client = _create_supabase_client()
 
     def save_product(self, product: Product) -> None:
         data = {
@@ -51,7 +51,9 @@ class SupabaseProductRepository(ProductRepositoryPort):
         self.client.table("products").upsert(data).execute()
 
     def load_product(self, product_id: str) -> Optional[Product]:
-        response = self.client.table("products").select("*").eq("id", product_id).execute()
+        response = (
+            self.client.table("products").select("*").eq("id", product_id).execute()
+        )
 
         if not response.data:
             return None
@@ -72,8 +74,8 @@ class SupabaseProductRepository(ProductRepositoryPort):
 
     def load_all_products(self) -> List[Product]:
         response = self.client.table("products").select("*").execute()
-        products: List[Product] = []
 
+        products: List[Product] = []
         for p in response.data:
             products.append(
                 Product(
@@ -98,7 +100,7 @@ class SupabaseProductRepository(ProductRepositoryPort):
 
 class SupabaseMovementRepository(MovementRepositoryPort):
     def __init__(self):
-        self.client = _create_client()
+        self.client = _create_supabase_client()
 
     def save_movement(self, movement: Movement) -> None:
         data = {
@@ -115,8 +117,8 @@ class SupabaseMovementRepository(MovementRepositoryPort):
 
     def load_movements(self) -> List[Movement]:
         response = self.client.table("movements").select("*").execute()
-        movements: List[Movement] = []
 
+        movements: List[Movement] = []
         for m in response.data:
             movements.append(
                 Movement(
@@ -136,7 +138,7 @@ class SupabaseMovementRepository(MovementRepositoryPort):
 
 class SupabaseMemberRepository(MemberRepositoryPort):
     def __init__(self):
-        self.client = _create_client()
+        self.client = _create_supabase_client()
 
     def save_member(self, member: Member) -> None:
         data = {
@@ -152,7 +154,12 @@ class SupabaseMemberRepository(MemberRepositoryPort):
         self.client.table("members").upsert(data).execute()
 
     def load_member(self, member_id: str) -> Optional[Member]:
-        response = self.client.table("members").select("*").eq("member_id", member_id).execute()
+        response = (
+            self.client.table("members")
+            .select("*")
+            .eq("member_id", member_id)
+            .execute()
+        )
 
         if not response.data:
             return None
@@ -171,8 +178,8 @@ class SupabaseMemberRepository(MemberRepositoryPort):
 
     def load_all_members(self) -> List[Member]:
         response = self.client.table("members").select("*").execute()
-        members: List[Member] = []
 
+        members: List[Member] = []
         for m in response.data:
             members.append(
                 Member(
@@ -195,7 +202,7 @@ class SupabaseMemberRepository(MemberRepositoryPort):
 
 class SupabaseEmployeeRepository(EmployeeRepositoryPort):
     def __init__(self):
-        self.client = _create_client()
+        self.client = _create_supabase_client()
 
     def save_employee(self, employee: Employee) -> None:
         data = {
@@ -211,7 +218,12 @@ class SupabaseEmployeeRepository(EmployeeRepositoryPort):
         self.client.table("employees").upsert(data).execute()
 
     def load_employee(self, employee_id: str) -> Optional[Employee]:
-        response = self.client.table("employees").select("*").eq("employee_id", employee_id).execute()
+        response = (
+            self.client.table("employees")
+            .select("*")
+            .eq("employee_id", employee_id)
+            .execute()
+        )
 
         if not response.data:
             return None
@@ -230,8 +242,8 @@ class SupabaseEmployeeRepository(EmployeeRepositoryPort):
 
     def load_all_employees(self) -> List[Employee]:
         response = self.client.table("employees").select("*").execute()
-        employees: List[Employee] = []
 
+        employees: List[Employee] = []
         for e in response.data:
             employees.append(
                 Employee(
@@ -254,7 +266,7 @@ class SupabaseEmployeeRepository(EmployeeRepositoryPort):
 
 class SupabaseEquipmentRepository(EquipmentRepositoryPort):
     def __init__(self):
-        self.client = _create_client()
+        self.client = _create_supabase_client()
 
     def save_equipment(self, equipment: Equipment) -> None:
         data = {
@@ -269,7 +281,12 @@ class SupabaseEquipmentRepository(EquipmentRepositoryPort):
         self.client.table("equipment").upsert(data).execute()
 
     def load_equipment(self, equipment_id: str) -> Optional[Equipment]:
-        response = self.client.table("equipment").select("*").eq("equipment_id", equipment_id).execute()
+        response = (
+            self.client.table("equipment")
+            .select("*")
+            .eq("equipment_id", equipment_id)
+            .execute()
+        )
 
         if not response.data:
             return None
@@ -287,8 +304,8 @@ class SupabaseEquipmentRepository(EquipmentRepositoryPort):
 
     def load_all_equipment(self) -> List[Equipment]:
         response = self.client.table("equipment").select("*").execute()
-        equipment_list: List[Equipment] = []
 
+        equipment_list: List[Equipment] = []
         for eq in response.data:
             equipment_list.append(
                 Equipment(
@@ -310,7 +327,7 @@ class SupabaseEquipmentRepository(EquipmentRepositoryPort):
 
 class SupabaseVendingMachineRepository(VendingMachineRepositoryPort):
     def __init__(self):
-        self.client = _create_client()
+        self.client = _create_supabase_client()
 
     def save_machine(self, machine: VendingMachine) -> None:
         data = {
@@ -324,7 +341,12 @@ class SupabaseVendingMachineRepository(VendingMachineRepositoryPort):
         self.client.table("vending_machines").upsert(data).execute()
 
     def load_machine(self, machine_id: str) -> Optional[VendingMachine]:
-        response = self.client.table("vending_machines").select("*").eq("machine_id", machine_id).execute()
+        response = (
+            self.client.table("vending_machines")
+            .select("*")
+            .eq("machine_id", machine_id)
+            .execute()
+        )
 
         if not response.data:
             return None
@@ -341,8 +363,8 @@ class SupabaseVendingMachineRepository(VendingMachineRepositoryPort):
 
     def load_all_machines(self) -> List[VendingMachine]:
         response = self.client.table("vending_machines").select("*").execute()
-        machines: List[VendingMachine] = []
 
+        machines: List[VendingMachine] = []
         for m in response.data:
             machines.append(
                 VendingMachine(
