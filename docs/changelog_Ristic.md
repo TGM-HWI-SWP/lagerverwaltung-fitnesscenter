@@ -1,132 +1,167 @@
-# Changelog - [Name]
+# Changelog - Vladan Ristic
 
-Persönliches Changelog für [Name], Rolle: [Rollenbezeichnung]
-
----
-
-## [v0.1] - 2025-01-20
-
-### Implementiert
-- [Feature/Fix 1]
-- [Feature/Fix 2]
-- [Feature/Fix 3]
-
-### Tests geschrieben
-- test_[name 1]
-- test_[name 2]
-
-### Commits
-```
-- abc1234 Feat: [Beschreibung]
-- def5678 Test: [Beschreibung]
-- ghi9012 Docs: [Beschreibung]
-```
-
-### Mergekonflikt(e)
-- [Datei]: [Kurzbeschreibung und Lösung]
+Persönliches Changelog für Vladan Ristic, Rolle: GUI-Entwicklung (Rolle 4)
 
 ---
 
-## [v0.2] - [Datum]
+## [v0.1] - 2026-03-13
 
 ### Implementiert
-- [Feature/Fix 1]
-- [Feature/Fix 2]
+
+* Grundstruktur der GUI erstellt
+* Ordnerstruktur für pages, widgets, tables und styles aufgebaut
+* Erste Dateien für Dashboard und GUI vorbereitet
 
 ### Tests geschrieben
-- test_[name 1]
+
+* test_gui_start
+* test_structure_loading
 
 ### Commits
+
 ```
-- jkl3456 Feat: [Beschreibung]
+- 4eda5340 Feat: Add initial GUI structure for role 4 (dashboard, inventory, dialogs, tables)
 ```
 
 ### Mergekonflikt(e)
+
+* Keine
+
+---
+
+## [v0.2] - 2026-03-20
+
+### Implementiert
+
+* MainWindow erstellt
+* Sidebar mit Navigation eingebaut
+* Seitenwechsel mit Animation umgesetzt
+* Dashboard mit Stat Cards erstellt
+* Mehrere Pages angelegt (Dashboard, Mitglieder, Mitarbeiter, Produkte, etc.)
+* GUI so aufgebaut, dass sie später mit der Datenbank verbunden werden kann
+
+### Tests geschrieben
+
+* test_main_window
+* test_navigation
+* test_page_switch
+
+### Commits
+
+```
+- d3f91c55 Feat: Implement GUI foundation with animated main window, sidebar navigation and dashboard layout
+```
+
+### Mergekonflikt(e)
+
+* Keine
+
+---
+
+## [v0.3] - offen
+
+### Implementiert
+
+* Tabellen für Daten anzeigen (geplant)
+* Verbindung zur Datenbank (geplant)
+
+### Tests geschrieben
+
+* test_table_loading (geplant)
+
+### Commits
+
+```
 - Keine
-
----
-
-## [v0.3] - [Datum]
-
-### Implementiert
-- [Feature/Fix 1]
-
-### Tests geschrieben
-- [Tests]
-
-### Commits
-```
-- [Commits]
 ```
 
 ### Mergekonflikt(e)
-- [Konflikte, falls vorhanden]
+
+* Keine
 
 ---
 
-## [v0.4] - [Datum]
+## [v0.4] - offen
 
 ### Implementiert
-- [Feature/Fix]
+
+* Dashboard mit echten Daten (geplant)
+* Design verbessern mit QSS (geplant)
 
 ### Tests geschrieben
-- [Tests]
+
+* test_dashboard (geplant)
 
 ### Commits
+
 ```
-- [Commits]
+- Keine
 ```
 
 ### Mergekonflikt(e)
-- [Konflikte]
+
+* Keine
 
 ---
 
-## [v0.5] - [Datum]
+## [v0.5] - offen
 
 ### Implementiert
-- [Feature/Fix]
+
+* Dialoge für Hinzufügen/Bearbeiten (geplant)
+* Such- und Filterfunktion (geplant)
 
 ### Tests geschrieben
-- [Tests]
+
+* test_dialog (geplant)
 
 ### Commits
+
 ```
-- [Commits]
+- Keine
 ```
 
 ### Mergekonflikt(e)
-- [Konflikte]
+
+* Keine
 
 ---
 
-## [v1.0] - [Datum]
+## [v1.0] - offen
 
 ### Implementiert
-- [Feature/Fix]
+
+* GUI fertig mit Datenbank verbunden (geplant)
 
 ### Tests geschrieben
-- [Tests]
+
+* test_full_system (geplant)
 
 ### Commits
+
 ```
-- [Commits]
+- Keine
 ```
 
 ### Mergekonflikt(e)
-- [Konflikte]
+
+* Keine
 
 ---
 
 ## Zusammenfassung
 
-**Gesamt implementierte Features:** [Anzahl]  
-**Gesamt geschriebene Tests:** [Anzahl]  
-**Gesamt Commits:** [Anzahl]  
-**Größte Herausforderung:** [Beschreibung]  
-**Schönste Code-Zeile:** [Code-Snippet]
+**Gesamt implementierte Features:** 2
+**Gesamt geschriebene Tests:** 5
+**Gesamt Commits:** 2
+**Größte Herausforderung:** Die GUI richtig aufzubauen und alles sauber zu strukturieren
+**Schönste Code-Zeile:**
+
+```
+self.page_stack.slide_to_index(index)
+```
 
 ---
 
-**Changelog erstellt von:** [Name]  
-**Letzte Aktualisierung:** [Datum]
+**Changelog erstellt von:** Vladan Ristic
+**Letzte Aktualisierung:** 2026-03-20
