@@ -15,6 +15,7 @@ from ..ports.member_repository_port import MemberRepositoryPort
 from ..ports.movement_repository_port import MovementRepositoryPort
 from ..ports.product_repository_port import ProductRepositoryPort
 from ..ports.vending_machine_repository_port import VendingMachineRepositoryPort
+from ..adapters.report import ConsoleReportAdapter
 
 
 class FitnessCenterService:
@@ -28,6 +29,7 @@ class FitnessCenterService:
         employee_repository: EmployeeRepositoryPort,
         equipment_repository: EquipmentRepositoryPort,
         vending_machine_repository: VendingMachineRepositoryPort,
+        report_adapter: ConsoleReportAdapter
     ):
         self.product_repository = product_repository
         self.movement_repository = movement_repository
@@ -35,6 +37,8 @@ class FitnessCenterService:
         self.employee_repository = employee_repository
         self.equipment_repository = equipment_repository
         self.vending_machine_repository = vending_machine_repository
+        self.report_adapter = report_adapter
+
 
     def create_member(
         self,
@@ -361,3 +365,13 @@ class FitnessCenterService:
 
     def get_all_machines(self) -> List[VendingMachine]:
         return self.vending_machine_repository.load_all_machines()
+    
+    def generate_inventory_report(self) -> str:
+        products = self.product_repository.load_all_products()
+        movements = self.movement_repository.load_movements()
+
+        # Daten an ReportAdapter übergeben
+        self.report_adapter.products = {p.id: p for p in products}
+        self.report_adapter.movements = movements
+
+        return self.report_adapter.generate_inventory_report()

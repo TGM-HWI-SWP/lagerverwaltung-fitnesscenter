@@ -1,8 +1,7 @@
 """Report Adapter - Report-Generierung"""
 
 from typing import Dict
-
-from ..ports import ReportPort
+from ..ports.report_port import ReportPort
 
 
 class ConsoleReportAdapter(ReportPort):
@@ -13,12 +12,7 @@ class ConsoleReportAdapter(ReportPort):
         self.movements = movements or []
 
     def generate_inventory_report(self) -> str:
-        """
-        Lagerbestandsbericht als Text generieren
-
-        Returns:
-            Formatierter Bericht
-        """
+        """Lagerbestandsbericht als Text generieren"""
         if not self.products:
             return "Lager ist leer.\n"
 
@@ -44,12 +38,7 @@ class ConsoleReportAdapter(ReportPort):
         return report
 
     def generate_movement_report(self) -> str:
-        """
-        Bewegungsprotokoll als Text generieren
-
-        Returns:
-            Formatierter Bericht
-        """
+        """Bewegungsprotokoll als Text generieren"""
         if not self.movements:
             return "Keine Lagerbewegungen vorhanden.\n"
 
