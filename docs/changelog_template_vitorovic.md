@@ -52,17 +52,21 @@ Persönliches Changelog für [Jovan Vitorovic], Rolle: [Rolle 2 Businesslogik un
 
 ---
 
-## [v0.3] - [Datum]
+## [v0.3] - 2026-03-27
 
 ### Implementiert
-- [Feature/Fix 1]
+- Report A (Lagerbestandsbericht) implementiert
+- ConsoleReportAdapter implementiert
+- Report-Generierung in Service integriert (generate_inventory_report)
+- Report zeigt Produktname, Kategorie, Bestand, Preis und Gesamtwert
+- Gesamtwert des gesamten Lagers wird berechnet
 
 ### Tests geschrieben
-- [Tests]
+- Test für den Report A geschrieben
 
 ### Commits
 ```
-- [Commits]
+- bf4bdec6 Report A implemented. Waiting for Role 1 domain and ports to run tests.
 ```
 
 ### Mergekonflikt(e)
