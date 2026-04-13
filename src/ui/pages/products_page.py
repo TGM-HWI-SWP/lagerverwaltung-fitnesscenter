@@ -5,6 +5,7 @@ from typing import Any
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import (
+    QAbstractItemView,
     QComboBox,
     QDialog,
     QDoubleSpinBox,
@@ -22,6 +23,8 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+
+from ui.widgets.stat_card import StatCard
 
 
 class ProductDialog(QDialog):
@@ -283,8 +286,102 @@ class StockDialog(QDialog):
         }
 
 
+class ProductsTableDialog(QDialog):
+    """Große Tabellenansicht für Produkte."""
+
+    TABLE_COLUMNS = [
+        "ID",
+        "Name",
+        "Beschreibung",
+        "Preis",
+        "Bestand",
+        "SKU",
+        "Kategorie",
+        "Notizen",
+    ]
+
+    def __init__(self, parent: QWidget | None = None, products: list[dict[str, Any]] | None = None) -> None:
+        super().__init__(parent)
+        self.products = products or []
+
+        self.setWindowTitle("Produktübersicht - vergrößerte Ansicht")
+        self.setMinimumSize(1300, 760)
+        self.resize(1450, 820)
+
+        self._create_ui()
+        self._populate_table()
+
+    def _create_ui(self) -> None:
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(18, 18, 18, 18)
+        layout.setSpacing(12)
+
+        title = QLabel("Produktübersicht")
+        title.setObjectName("dashboardSectionTitle")
+
+        subtitle = QLabel("Große Tabellenansicht zur besseren Betrachtung.")
+        subtitle.setObjectName("dashboardSectionSubtitle")
+        subtitle.setWordWrap(True)
+
+        self.table = QTableWidget()
+        self.table.setColumnCount(len(self.TABLE_COLUMNS))
+        self.table.setHorizontalHeaderLabels(self.TABLE_COLUMNS)
+        self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.table.setAlternatingRowColors(True)
+        self.table.setSortingEnabled(True)
+        self.table.verticalHeader().setVisible(False)
+        self.table.horizontalHeader().setStretchLastSection(True)
+
+        close_button = QPushButton("Schließen")
+        close_button.setObjectName("secondaryButton")
+        close_button.clicked.connect(self.accept)
+
+        button_row = QHBoxLayout()
+        button_row.addStretch()
+        button_row.addWidget(close_button)
+
+        layout.addWidget(title)
+        layout.addWidget(subtitle)
+        layout.addWidget(self.table, 1)
+        layout.addLayout(button_row)
+
+    def _populate_table(self) -> None:
+        self.table.setSortingEnabled(False)
+        self.table.setRowCount(len(self.products))
+
+        for row, product in enumerate(self.products):
+            values = [
+                product.get("id"),
+                product.get("name"),
+                product.get("description"),
+                f"{float(product.get('price', 0)):.2f} €",
+                product.get("quantity"),
+                product.get("sku"),
+                product.get("category"),
+                product.get("notes"),
+            ]
+
+            for col, value in enumerate(values):
+                item = QTableWidgetItem(str(value))
+                item.setTextAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+
+                if col == 4:
+                    quantity = int(product.get("quantity", 0))
+                    if quantity == 0:
+                        item.setBackground(QColor("#ff4d4d"))
+                    elif quantity < 10:
+                        item.setBackground(QColor("#ffcc00"))
+
+                self.table.setItem(row, col, item)
+
+        self.table.resizeColumnsToContents()
+        self.table.setSortingEnabled(True)
+
+
 class ProductsPage(QWidget):
-    """Seite zur Verwaltung aller Produkte."""
+    """Professionelle Produktseite mit großer Tabellenansicht."""
 
     TABLE_COLUMNS = [
         "ID",
@@ -301,14 +398,15 @@ class ProductsPage(QWidget):
         super().__init__()
         self.controller = controller
         self._all_products: list[dict[str, Any]] = []
+        self._filtered_products: list[dict[str, Any]] = []
 
         self._create_ui()
         self.refresh_data()
 
     def _create_ui(self) -> None:
         main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.setSpacing(18)
+        main_layout.setContentsMargins(24, 24, 24, 24)
+        main_layout.setSpacing(20)
 
         main_layout.addWidget(self._create_top_bar())
         main_layout.addWidget(self._create_stats_row())
@@ -316,11 +414,21 @@ class ProductsPage(QWidget):
 
     def _create_top_bar(self) -> QWidget:
         card = QFrame()
-        card.setObjectName("toolbarCard")
+        card.setObjectName("dashboardBottomCard")
 
-        layout = QHBoxLayout(card)
+        layout = QVBoxLayout(card)
         layout.setContentsMargins(18, 18, 18, 18)
-        layout.setSpacing(12)
+        layout.setSpacing(14)
+
+        title = QLabel("Produktverwaltung")
+        title.setObjectName("dashboardSectionTitle")
+
+        subtitle = QLabel("Produkte suchen, filtern, bearbeiten und den Bestand verwalten.")
+        subtitle.setObjectName("dashboardSectionSubtitle")
+        subtitle.setWordWrap(True)
+
+        controls = QHBoxLayout()
+        controls.setSpacing(12)
 
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText("Produkte suchen ...")
@@ -339,24 +447,37 @@ class ProductsPage(QWidget):
         )
         self.stock_filter.currentTextChanged.connect(self._apply_filters)
 
-        self.add_button = QPushButton("Produkt hinzufügen")
-        self.add_button.setObjectName("primaryButton")
+        self.add_button = QPushButton("➕ Produkt hinzufügen")
         self.add_button.clicked.connect(self._open_add_dialog)
 
-        self.edit_button = QPushButton("Bearbeiten")
+        self.edit_button = QPushButton("✏ Bearbeiten")
         self.edit_button.setObjectName("secondaryButton")
         self.edit_button.clicked.connect(self._open_edit_dialog)
 
-        self.stock_button = QPushButton("Bestand ändern")
+        self.stock_button = QPushButton("🔄 Bestand ändern")
         self.stock_button.setObjectName("secondaryButton")
         self.stock_button.clicked.connect(self._open_stock_dialog)
 
-        layout.addWidget(self.search_input, 1)
-        layout.addWidget(self.category_filter)
-        layout.addWidget(self.stock_filter)
-        layout.addWidget(self.add_button)
-        layout.addWidget(self.edit_button)
-        layout.addWidget(self.stock_button)
+        self.delete_button = QPushButton("🗑 Löschen")
+        self.delete_button.setObjectName("secondaryButton")
+        self.delete_button.clicked.connect(self._delete_product)
+
+        self.expand_button = QPushButton("🔍 Tabelle vergrößern")
+        self.expand_button.setObjectName("secondaryButton")
+        self.expand_button.clicked.connect(self.open_table_dialog)
+
+        controls.addWidget(self.search_input, 2)
+        controls.addWidget(self.category_filter, 1)
+        controls.addWidget(self.stock_filter, 1)
+        controls.addWidget(self.add_button)
+        controls.addWidget(self.edit_button)
+        controls.addWidget(self.stock_button)
+        controls.addWidget(self.delete_button)
+        controls.addWidget(self.expand_button)
+
+        layout.addWidget(title)
+        layout.addWidget(subtitle)
+        layout.addLayout(controls)
 
         return card
 
@@ -364,50 +485,60 @@ class ProductsPage(QWidget):
         wrapper = QWidget()
         layout = QGridLayout(wrapper)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(14)
+        layout.setSpacing(18)
 
-        self.total_products_card = self._create_stat_card("Produkte gesamt", "0")
-        self.total_stock_card = self._create_stat_card("Gesamtbestand", "0")
-        self.low_stock_card = self._create_stat_card("Kritische Produkte", "0")
-        self.value_card = self._create_stat_card("Lagerwert", "0.00 €")
+        self.total_products_card = StatCard(
+            title="Produkte gesamt",
+            value="0",
+            subtitle="Alle sichtbaren Produkte",
+            icon="📦",
+            accent="blue",
+        )
+        self.total_stock_card = StatCard(
+            title="Gesamtbestand",
+            value="0",
+            subtitle="Alle Einheiten im Lager",
+            icon="📚",
+            accent="green",
+        )
+        self.low_stock_card = StatCard(
+            title="Kritische Produkte",
+            value="0",
+            subtitle="Bestand unter 10",
+            icon="⚠",
+            accent="red",
+        )
+        self.value_card = StatCard(
+            title="Lagerwert",
+            value="0",
+            subtitle="Gesamter Warenwert",
+            icon="💶",
+            accent="purple",
+        )
 
         layout.addWidget(self.total_products_card, 0, 0)
         layout.addWidget(self.total_stock_card, 0, 1)
         layout.addWidget(self.low_stock_card, 0, 2)
         layout.addWidget(self.value_card, 0, 3)
 
+        for col in range(4):
+            layout.setColumnStretch(col, 1)
+
         return wrapper
-
-    def _create_stat_card(self, title: str, value: str) -> QFrame:
-        card = QFrame()
-        card.setObjectName("statCard")
-
-        layout = QVBoxLayout(card)
-        layout.setContentsMargins(16, 14, 16, 14)
-        layout.setSpacing(4)
-
-        title_label = QLabel(title)
-        title_label.setObjectName("statTitle")
-
-        value_label = QLabel(value)
-        value_label.setObjectName("statValue")
-
-        layout.addWidget(title_label)
-        layout.addWidget(value_label)
-
-        card.value_label = value_label
-        return card
 
     def _create_table_card(self) -> QWidget:
         card = QFrame()
-        card.setObjectName("tableCard")
+        card.setObjectName("dashboardBottomCard")
 
         layout = QVBoxLayout(card)
         layout.setContentsMargins(18, 18, 18, 18)
         layout.setSpacing(12)
 
         title = QLabel("Produktübersicht")
-        title.setObjectName("sectionTitle")
+        title.setObjectName("dashboardSectionTitle")
+
+        subtitle = QLabel("Alle Produkte passend zu Suche und Filtern.")
+        subtitle.setObjectName("dashboardSectionSubtitle")
 
         self.products_table = QTableWidget()
         self.products_table.setObjectName("productsTable")
@@ -415,24 +546,19 @@ class ProductsPage(QWidget):
         self.products_table.setHorizontalHeaderLabels(self.TABLE_COLUMNS)
         self.products_table.verticalHeader().setVisible(False)
         self.products_table.setAlternatingRowColors(True)
-        self.products_table.setSelectionBehavior(
-            QTableWidget.SelectionBehavior.SelectRows
-        )
-        self.products_table.setSelectionMode(
-            QTableWidget.SelectionMode.SingleSelection
-        )
-        self.products_table.setEditTriggers(
-            QTableWidget.EditTrigger.NoEditTriggers
-        )
+        self.products_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.products_table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.products_table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.products_table.horizontalHeader().setStretchLastSection(True)
+        self.products_table.setSortingEnabled(True)
 
         layout.addWidget(title)
+        layout.addWidget(subtitle)
         layout.addWidget(self.products_table)
 
         return card
 
     def refresh_data(self) -> None:
-        """Lädt Daten neu. Erst Demo, später Controller."""
         if self.controller is not None:
             try:
                 products = self.controller.get_all_products()
@@ -497,6 +623,26 @@ class ProductsPage(QWidget):
                 "category": "Snacks",
                 "notes": "",
             },
+            {
+                "id": "PROD-006",
+                "name": "Shaker Bottle",
+                "description": "600ml Shaker",
+                "price": 7.90,
+                "quantity": 14,
+                "sku": "SHK-600",
+                "category": "Merchandise",
+                "notes": "",
+            },
+            {
+                "id": "PROD-007",
+                "name": "Disinfectant Spray",
+                "description": "Flächendesinfektion",
+                "price": 5.20,
+                "quantity": 6,
+                "sku": "HYG-101",
+                "category": "Hygiene",
+                "notes": "Nachbestellen",
+            },
         ]
 
     def _apply_filters(self) -> None:
@@ -517,19 +663,15 @@ class ProductsPage(QWidget):
                 ]
             ).lower()
 
-            # --- Suche ---
             if search_text and search_text not in product_text:
                 continue
 
-            # --- Kategorie Filter ---
-            if category != "Alle Kategorien":
-                if product.get("category") != category:
-                    continue
+            if category != "Alle Kategorien" and product.get("category") != category:
+                continue
 
-            # --- Bestand Filter ---
             quantity = int(product.get("quantity", 0))
 
-            if stock_mode == "Nur kritisch" and quantity > 10:
+            if stock_mode == "Nur kritisch" and quantity >= 10:
                 continue
             if stock_mode == "Nur leer" and quantity != 0:
                 continue
@@ -538,11 +680,12 @@ class ProductsPage(QWidget):
 
             filtered_products.append(product)
 
+        self._filtered_products = filtered_products
         self._populate_table(filtered_products)
         self._update_stats(filtered_products)
 
-
     def _populate_table(self, products: list[dict[str, Any]]) -> None:
+        self.products_table.setSortingEnabled(False)
         self.products_table.setRowCount(len(products))
 
         for row, product in enumerate(products):
@@ -550,7 +693,7 @@ class ProductsPage(QWidget):
                 product.get("id"),
                 product.get("name"),
                 product.get("description"),
-                f"{product.get('price', 0):.2f} €",
+                f"{float(product.get('price', 0)):.2f} €",
                 product.get("quantity"),
                 product.get("sku"),
                 product.get("category"),
@@ -559,6 +702,7 @@ class ProductsPage(QWidget):
 
             for col, value in enumerate(values):
                 item = QTableWidgetItem(str(value))
+                item.setTextAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
                 if col == 4:
                     quantity = int(product.get("quantity", 0))
@@ -569,6 +713,11 @@ class ProductsPage(QWidget):
 
                 self.products_table.setItem(row, col, item)
 
+        self.products_table.resizeColumnsToContents()
+        self.products_table.setSortingEnabled(True)
+
+        if products and self.products_table.rowCount() > 0:
+            self.products_table.selectRow(0)
 
     def _update_stats(self, products: list[dict[str, Any]]) -> None:
         total_products = len(products)
@@ -578,26 +727,46 @@ class ProductsPage(QWidget):
             float(p.get("price", 0)) * int(p.get("quantity", 0)) for p in products
         )
 
-        self.total_products_card.value_label.setText(str(total_products))
-        self.total_stock_card.value_label.setText(str(total_stock))
-        self.low_stock_card.value_label.setText(str(low_stock))
-        self.value_card.value_label.setText(f"{total_value:.2f} €")
-
+        self.total_products_card.set_value_animated(total_products)
+        self.total_stock_card.set_value_animated(total_stock)
+        self.low_stock_card.set_value_animated(low_stock)
+        self.value_card.set_value(f"{total_value:.2f} €")
 
     def _get_selected_product(self) -> dict[str, Any] | None:
         row = self.products_table.currentRow()
         if row < 0:
             return None
-        return self._all_products[row]
 
+        id_item = self.products_table.item(row, 0)
+        if id_item is None:
+            return None
+
+        product_id = id_item.text()
+        for product in self._filtered_products:
+            if str(product.get("id")) == product_id:
+                return product
+
+        return None
+
+    def open_table_dialog(self) -> None:
+        dialog = ProductsTableDialog(self, self._filtered_products)
+        dialog.exec()
 
     def _open_add_dialog(self) -> None:
         dialog = ProductDialog(self)
         if dialog.exec():
             data = dialog.get_data()
+
+            if any(p.get("id") == data["id"] for p in self._all_products):
+                QMessageBox.warning(
+                    self,
+                    "Doppelte Produkt-ID",
+                    "Diese Produkt-ID existiert bereits.",
+                )
+                return
+
             self._all_products.append(data)
             self._apply_filters()
-
 
     def _open_edit_dialog(self) -> None:
         product = self._get_selected_product()
@@ -608,10 +777,13 @@ class ProductsPage(QWidget):
         dialog = ProductDialog(self, product)
         if dialog.exec():
             updated = dialog.get_data()
-            index = self._all_products.index(product)
-            self._all_products[index] = updated
-            self._apply_filters()
 
+            for index, existing_product in enumerate(self._all_products):
+                if existing_product.get("id") == product.get("id"):
+                    self._all_products[index] = updated
+                    break
+
+            self._apply_filters()
 
     def _open_stock_dialog(self) -> None:
         product = self._get_selected_product()
@@ -621,12 +793,41 @@ class ProductsPage(QWidget):
 
         dialog = StockDialog(
             self,
-            product_id=product["id"],
-            product_name=product["name"],
-            current_quantity=product["quantity"],
+            product_id=str(product["id"]),
+            product_name=str(product["name"]),
+            current_quantity=int(product["quantity"]),
         )
 
         if dialog.exec():
             result = dialog.get_data()
-            product["quantity"] = result["new_quantity"]
+
+            for existing_product in self._all_products:
+                if existing_product.get("id") == product.get("id"):
+                    existing_product["quantity"] = result["new_quantity"]
+                    note = result["reason"]
+                    existing_product["notes"] = (
+                        f"{existing_product.get('notes', '')} | {note}".strip(" |")
+                    )
+                    break
+
+            self._apply_filters()
+
+    def _delete_product(self) -> None:
+        product = self._get_selected_product()
+        if not product:
+            QMessageBox.warning(self, "Fehler", "Bitte ein Produkt auswählen.")
+            return
+
+        answer = QMessageBox.question(
+            self,
+            "Produkt löschen",
+            f"Möchtest du das Produkt '{product.get('name', '')}' wirklich löschen?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+
+        if answer == QMessageBox.StandardButton.Yes:
+            self._all_products = [
+                p for p in self._all_products if p.get("id") != product.get("id")
+            ]
             self._apply_filters()
