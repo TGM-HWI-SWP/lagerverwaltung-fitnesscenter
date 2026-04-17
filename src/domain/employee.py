@@ -3,34 +3,36 @@ from datetime import datetime
 
 
 @dataclass
-class Member:
-    """Domain-Modell für ein Fitnesscenter-Mitglied"""
+class Employee:
+    """Domain-Modell für einen Mitarbeiter des Fitnesscenters"""
 
-    member_id: str
+    employee_id: str
     first_name: str
     last_name: str
+    role: str
     email: str
     phone: str = ""
-    membership_type: str = "Standard"
     active: bool = True
     created_at: datetime = field(default_factory=datetime.utcnow)
 
     def __post_init__(self):
-        if not self.member_id:
-            raise ValueError("Member ID kann nicht leer sein")
+        if not self.employee_id:
+            raise ValueError("Employee ID kann nicht leer sein")
         if not self.first_name.strip():
             raise ValueError("Vorname kann nicht leer sein")
         if not self.last_name.strip():
             raise ValueError("Nachname kann nicht leer sein")
+        if not self.role.strip():
+            raise ValueError("Rolle kann nicht leer sein")
         if not self.email.strip():
             raise ValueError("E-Mail kann nicht leer sein")
 
     def deactivate(self) -> None:
-        """Mitglied deaktivieren"""
+        """Mitarbeiter deaktivieren"""
         self.active = False
 
     def activate(self) -> None:
-        """Mitglied aktivieren"""
+        """Mitarbeiter aktivieren"""
         self.active = True
 
     def full_name(self) -> str:

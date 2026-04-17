@@ -25,13 +25,15 @@ Das Projekt folgt der **Port-Adapter-Architektur** (Hexagonal Architecture) für
         ┌──────────────┴──────────────┐
         │                             │
 ┌───────▼────────┐          ┌────────▼──────────┐
-│  Ports         │          │   Adapters       │
-│  (Abstract)    │          │ (Implementations)│
+│  Ports         │          │   Adapters        │
+│  (Abstract)    │          │ (Implementations) │
 │                │          │                   │
-│RepositoryPort │◄────────►│InMemoryRepository│
-│ ReportPort     │          │(sqlite, json, ...|
+│RepositoryPort  │◄────────►│InMemoryRepository │
+│ReportPort      │          │(sqlite, json, ...)|
 └────────────────┘          └───────────────────┘
 ```
+
+---
 
 ## Komponenten
 
@@ -40,253 +42,255 @@ Das Projekt folgt der **Port-Adapter-Architektur** (Hexagonal Architecture) für
 **Verantwortung:** Reine Geschäftslogik, unabhängig von technischen Details
 
 #### `product.py`
-- **Klasse:** `Product`
-- **Attribute:** id, name, description, price, quantity, sku, category, created_at, updated_at, notes
-- **Methoden:**
-  - `update_quantity(amount)` - Bestand aktualisieren mit Validierung
-  - `get_total_value()` - Lagerwert berechnen
-- **Validierung:** Negative Preise/Bestände nicht erlaubt
-
-#### `warehouse.py`
-- **Klasse:** `Warehouse`
-  - **Attribute:** name, products (Dict), movements (List)
-  - **Methoden:**
-    - `add_product(product)` - Produkt hinzufügen
-    - `get_product(id)` - Produkt abrufen
-    - `record_movement(movement)` - Bewegung protokollieren
-    - `get_total_inventory_value()` - Gesamtwert
-    - `get_inventory_report()` - Report-Daten
-
-- **Klasse:** `Movement`
-  - **Attribute:** id, product_id, product_name, quantity_change, movement_type, reason, timestamp, performed_by
-  - **Beschreibung:** Immutable Bewegungslog
-
-### 2. Ports (`src/ports/`)
-
-**Verantwortung:** Schnittstellen-Definitionen (Abstraktion)
-
-#### `RepositoryPort`
-```python
-class RepositoryPort(ABC):
-    @abstractmethod
-    def save_product(self, product: Product) -> None: ...
-    
-    @abstractmethod
-    def load_product(self, product_id: str) -> Optional[Product]: ...
-    
-    @abstractmethod
-    def load_all_products(self) -> Dict[str, Product]: ...
-    
-    @abstractmethod
-    def delete_product(self, product_id: str) -> None: ...
-    
-    @abstractmethod
-    def save_movement(self, movement: Movement) -> None: ...
-    
-    @abstractmethod
-    def load_movements(self) -> List[Movement]: ...
-```
-
-#### `ReportPort`
-```python
-class ReportPort(ABC):
-    @abstractmethod
-    def generate_inventory_report(self) -> str: ...
-    
-    @abstractmethod
-    def generate_movement_report(self) -> str: ...
-```
-
-### 3. Adapters (`src/adapters/`)
-
-**Verantwortung:** Konkrete Implementierungen der Ports
-
-#### `repository.py`
-
-**InMemoryRepository**
-- **Ziel:** Schnell, für Tests und Prototyping
-- **Speicher:** In RAM (Dict, List)
-- **Performance:** O(1) für Zugriff
-- **Persistenz:** Nein
-
-**RepositoryFactory**
-- **Pattern:** Factory Pattern
-- **Methode:** `create_repository(type: str) -> RepositoryPort`
-- **Typen:** "memory" (weitere später)
-
-#### `report.py`
-
-**ConsoleReportAdapter**
-- **Ziel:** Text-basierte Report-Generierung
-- **Ausgabe:** Formatierte Strings
-- **Verwendung:** Console, Logging, Dateiexport
-
-### 4. Services (`src/services/`)
-
-**Verantwortung:** Business-Use-Cases, Orchestrierung
-
-#### `WarehouseService`
-- **Dependency Injection:** Repository über Constructor
-- **Methoden:**
-  - `create_product(...)` - Neues Produkt
-  - `add_to_stock(product_id, quantity, reason, user)` - Bestand erhöhen
-  - `remove_from_stock(product_id, quantity, reason, user)` - Bestand verringern
-  - `get_product(product_id)` - Produkt abrufen
-  - `get_all_products()` - Alle Produkte
-  - `get_movements()` - Alle Bewegungen
-  - `get_total_inventory_value()` - Gesamtwert
-
-### 5. UI Layer (`src/ui/`)
-
-**Verantwortung:** Benutzeroberfläche (PyQt6)
-
-#### `WarehouseMainWindow`
-- **Framework:** PyQt6
-- **Layout:** Tab-basiert
-  - Tab 1: Produktverwaltung (Tabelle, Buttons)
-  - Tab 2: Lagerbewegungen (Protokoll)
-  - Tab 3: Berichte (Report-Generierung)
-
-#### `ProductDialogWindow`
-- **Typ:** Modal Dialog
-- **Felder:** ID, Name, Beschreibung, Preis, Menge, Kategorie
-
-### 6. Tests (`tests/`)
-
-#### Unit Tests (`tests/unit/`)
-```
-test_domain.py
-  - TestProduct
-    - test_product_creation
-    - test_product_validation_*
-    - test_update_quantity*
-    - test_get_total_value
-  
-  - TestWarehouseService
-    - test_create_product
-    - test_add_to_stock
-    - test_remove_from_stock*
-    - test_get_all_products
-    - test_get_total_inventory_value
-    - test_get_movements
-```
-
-#### Integration Tests (`tests/integration/`)
-```
-test_integration.py
-  - TestIntegration
-    - test_full_workflow
-    - test_report_generation
-```
-
-## Dependency Injection
-
-```python
-# Beispiel:
-repository = RepositoryFactory.create_repository("memory")
-service = WarehouseService(repository)
-ui = WarehouseMainWindow()
-```
-
-**Vorteile:**
-- Lose Kopplung
-- Einfaches Testen (Mock-Repositories)
-- Austauschbare Implementierungen
-
-## Datenflusss
-
-```
-UI-Ereignis
-    ↓
-Service-Methode (WarehouseService)
-    ↓
-Domain-Validierung (Product.update_quantity)
-    ↓
-Repository-Operation (save_product, save_movement)
-    ↓
-Speicherung (InMemory, später SQLite, JSON, etc.)
-    ↓
-Rückmeldung an UI
-```
-
-## Erweiterungen (Roadmap)
-
-### SQLite-Adapter
-```python
-class SQLiteRepository(RepositoryPort):
-    def __init__(self, db_path: str):
-        self.conn = sqlite3.connect(db_path)
-        self._create_tables()
-    
-    def save_product(self, product: Product) -> None:
-        # SQL-INSERT oder UPDATE
-        pass
-```
-
-### JSON-Adapter
-```python
-class JSONRepository(RepositoryPort):
-    def __init__(self, file_path: str):
-        self.file_path = file_path
-    
-    def save_product(self, product: Product) -> None:
-        # JSON-Serialisierung
-        pass
-```
-
-### Grafik-Reports
-```python
-class MatplotlibReportAdapter(ReportPort):
-    def generate_inventory_report(self) -> str:
-        # Matplotlib-Diagramme
-        pass
-```
-
-## Testing-Strategie
-
-### Unit Tests
-- Domäne isoliert testen
-- Mock-Repository verwenden
-- Fokus auf Geschäftslogik
-
-### Integration Tests
-- Komponenten zusammen testen
-- Real Service + Real Repository
-- Komplette Workflows
-
-### Datengenerierung
-Dummy-Daten für Tests:
-```python
-service.create_product("TEST-001", "Test Product", "Test", 100.0, initial_quantity=50)
-```
-
-## Performance-Überlegungen
-
-### Aktuell (In-Memory)
-- Alle Operationen: O(1) bis O(n)
-- Speicher: Begrenzt durch RAM
-- Ideal für: Prototyping, Tests
-
-### Zukünftig (Datenbank)
-- Indizes für häufige Abfragen
-- Pagginierung für große Datenmengen
-- Connection Pooling
-
-## Sicherheit (Roadmap)
-
-- Benutzer-Authentifizierung
-- Audit-Logging für Änderungen
-- Validierung aller Eingaben
-- SQL-Injection-Schutz (bei DBs)
-
-## Dokumentation
-
-- Schnittstellen: `docs/contracts.md`
-- Architektur: `docs/architecture.md`
-- Tests: `docs/tests.md`
-- Changelog: `docs/changelog_<name>.md`
+- Klasse: `Product`
+- Attribute: product_id, name, description, price, quantity, category
+- Methoden:
+  - `update_quantity(amount)`
+- Validierung: keine negativen Werte
 
 ---
 
-**Letzte Aktualisierung:** 2025-01-20
-**Version:** 0.1
+#### `movement.py`
+- Klasse: `Movement`
+- Attribute: movement_id, product_id, quantity_change, movement_type, timestamp, performed_by
+
+---
+
+#### `member.py`
+- Klasse: `Member`
+- Attribute: member_id, first_name, last_name, email, phone, membership_type, active, created_at
+- Methoden:
+  - `activate()`
+  - `deactivate()`
+  - `full_name()`
+
+---
+
+#### `employee.py`
+- Klasse: `Employee`
+- Attribute: employee_id, first_name, last_name, role, email, phone, active, created_at
+- Methoden:
+  - `activate()`
+  - `deactivate()`
+  - `full_name()`
+
+---
+
+#### `equipment.py`
+- Klasse: `Equipment`
+- Attribute: equipment_id, name, equipment_type, location, status, assigned_employee_id, created_at
+- Methoden:
+  - `set_status(status)`
+  - `assign_employee(employee_id)`
+
+---
+
+#### `vending_machine.py`
+- Klasse: `VendingMachine`
+- Attribute: machine_id, location, machine_type, assigned_employee_id, active, created_at
+- Methoden:
+  - `activate()`
+  - `deactivate()`
+  - `assign_employee(employee_id)`
+
+---
+
+### 2. Ports (`src/ports/`)
+
+**Verantwortung:** Schnittstellen (Abstraktion)
+
+#### Repository Ports
+- `ProductRepositoryPort`
+- `MovementRepositoryPort`
+- `MemberRepositoryPort`
+- `EmployeeRepositoryPort`
+- `EquipmentRepositoryPort`
+- `VendingMachineRepositoryPort`
+
+#### Typische Methoden
+```python
+save(...)
+load(id)
+load_all()
+delete(id)
+```
+
+---
+
+#### ReportPort
+```python
+class ReportPort(ABC):
+    @abstractmethod
+    def generate_inventory_report(self) -> list[dict]: ...
+
+    @abstractmethod
+    def generate_equipment_status_report(self) -> list[dict]: ...
+```
+
+---
+
+### 3. Adapters (`src/adapters/`)
+
+**Verantwortung:** Implementierungen der Ports
+
+#### Repository Adapter
+- `InMemoryProductRepository`
+- `InMemoryMemberRepository`
+- `InMemoryEmployeeRepository`
+- `InMemoryEquipmentRepository`
+- `InMemoryVendingMachineRepository`
+
+**Eigenschaften:**
+- Speicherung im RAM
+- schnell
+- keine Persistenz
+
+---
+
+#### Report Adapter
+- `ConsoleReportAdapter`
+
+**Funktion:**
+- generiert strukturierte Reports
+
+---
+
+### 4. Services (`src/services/`)
+
+**Verantwortung:** Businesslogik
+
+#### `FitnessCenterService`
+
+##### Member
+- `create_member(...)`
+- `get_member(...)`
+- `get_all_members()`
+- `activate_member(...)`
+- `deactivate_member(...)`
+
+---
+
+##### Employee
+- `create_employee(...)`
+- `get_all_employees()`
+
+---
+
+##### Product
+- `create_product(...)`
+- `add_stock(...)`
+- `remove_stock(...)`
+- `get_all_products()`
+
+---
+
+##### Equipment
+- `create_equipment(...)`
+- `update_equipment_status(...)`
+- `assign_employee_to_equipment(...)`
+- `get_all_equipment()`
+
+---
+
+##### VendingMachine
+- `create_machine(...)`
+- `assign_employee_to_machine(...)`
+- `get_all_machines()`
+
+---
+
+##### Movement
+- `get_movements()`
+
+---
+
+### 5. UI Layer (`src/ui/`)
+
+**Verantwortung:** GUI (PyQt6)
+
+#### Struktur
+- Dashboard
+- Members
+- Employees
+- Products
+- Movements
+- Equipment
+- Vending Machines
+- Reports
+
+#### Regeln
+- GUI nutzt nur Service
+- keine direkte DB-Logik
+
+---
+
+### 6. Tests (`tests/`)
+
+#### Unit Tests
+- Domain testen
+- Service testen
+
+---
+
+#### Integration Tests
+- komplette Workflows
+
+---
+
+### Dependency Injection
+
+```python
+product_repo = InMemoryProductRepository()
+member_repo = InMemoryMemberRepository()
+
+service = FitnessCenterService(product_repo, member_repo)
+```
+
+---
+
+### Datenfluss
+
+```
+GUI
+ ↓
+Service
+ ↓
+Domain
+ ↓
+Repository
+ ↓
+Speicherung
+ ↓
+Antwort an GUI
+```
+
+---
+
+### Erweiterungen (Roadmap)
+
+- Datenbank (SQLite / Supabase)
+- REST API
+- Export (PDF / CSV)
+- Login-System
+
+---
+
+### Sicherheit
+
+- Input-Validierung
+- Rollen
+- Logging
+
+---
+
+### Dokumentation
+
+- docs/contracts.md
+- docs/architecture.md
+- docs/tests.md
+- docs/changelog_<name>.md
+
+---
+
+**Letzte Aktualisierung:** 2026-03-20  
+**Version:** 0.2
