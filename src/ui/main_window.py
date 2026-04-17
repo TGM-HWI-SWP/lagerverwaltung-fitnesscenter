@@ -19,17 +19,17 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ui.auth.auth_service import AuthService
-from ui.pages.dashboard_page import DashboardPage
-from ui.pages.employees_page import EmployeesPage
-from ui.pages.equipment_page import EquipmentPage
-from ui.pages.members_page import MembersPage
-from ui.pages.movements_page import MovementsPage
-from ui.pages.products_page import ProductsPage
-from ui.pages.reports_page import ReportsPage
-from ui.pages.vending_page import VendingPage
-from ui.widgets.animated_stack import AnimatedStackedWidget
-from ui.widgets.sidebar import Sidebar
+from src.ui.auth.auth_service import AuthService
+from src.ui.pages.dashboard_page import DashboardPage
+from src.ui.pages.employees_page import EmployeesPage
+from src.ui.pages.equipment_page import EquipmentPage
+from src.ui.pages.members_page import MembersPage
+from src.ui.pages.movements_page import MovementsPage
+from src.ui.pages.products_page import ProductsPage
+from src.ui.pages.reports_page import ReportsPage
+from src.ui.pages.vending_page import VendingPage
+from src.ui.widgets.animated_stack import AnimatedStackedWidget
+from src.ui.widgets.sidebar import Sidebar
 
 
 @dataclass(frozen=True)
@@ -533,9 +533,9 @@ class MainWindow(QMainWindow):
         try:
             self.auth_service.clear_session()
 
-            from ui.auth.login_window import LoginWindow
+            from src.ui.auth.login_window import LoginWindow
 
-            self.login_window = LoginWindow()
+            self.login_window = LoginWindow(controller=self.controller)
             self.login_window.show()
             self.close()
         except Exception as error:

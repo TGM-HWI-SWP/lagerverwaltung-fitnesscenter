@@ -21,7 +21,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ui.widgets.stat_card import StatCard
+from src.ui.widgets.stat_card import StatCard
 
 
 @dataclass
@@ -131,7 +131,6 @@ class MembersPage(QWidget):
         self.filtered_members: list[MemberRecord] = []
 
         self._create_ui()
-        self._load_demo_data()
         self.refresh_data()
 
     def _create_ui(self) -> None:
@@ -163,17 +162,17 @@ class MembersPage(QWidget):
             accent="green",
         )
         self.paused_card = StatCard(
-            title="Pausiert",
+            title="Inaktiv",
             value="0",
-            subtitle="Vorübergehend pausiert",
+            subtitle="Derzeit inaktive Mitgliedschaften",
             icon="⏸",
             accent="orange",
         )
         self.expired_card = StatCard(
-            title="Abgelaufen",
+            title="Gefiltert",
             value="0",
-            subtitle="Benötigen Verlängerung",
-            icon="⚠",
+            subtitle="Aktuell angezeigte Datensätze",
+            icon="📋",
             accent="red",
         )
 
@@ -209,7 +208,7 @@ class MembersPage(QWidget):
         self.search_input.textChanged.connect(self.apply_filters)
 
         self.status_filter = QComboBox()
-        self.status_filter.addItems(["Alle Status", "Aktiv", "Pausiert", "Abgelaufen"])
+        self.status_filter.addItems(["Alle Status", "Aktiv", "Inaktiv"])
         self.status_filter.currentTextChanged.connect(self.apply_filters)
 
         self.plan_filter = QComboBox()
@@ -287,6 +286,32 @@ class MembersPage(QWidget):
             MemberRecord("M-1007", "Paul Moser", "+43 677 111222", "paul.moser@mail.com", "Student", "Pausiert", "27.11.2024"),
             MemberRecord("M-1008", "Emma Eder", "+43 680 444999", "emma.eder@mail.com", "Premium", "Aktiv", "05.12.2024"),
         ]
+    
+    def _map_member_to_record(self, member: Any) -> MemberRecord:
+        first_name = getattr(member, "first_name", "") or ""
+        last_name = getattr(member, "last_name", "") or ""
+        full_name = f"{first_name} {last_name}".strip()
+
+        member_id = getattr(member, "member_id", "") or ""
+        phone = getattr(member, "phone", "") or ""
+        email = getattr(member, "email", "") or ""
+        plan = getattr(member, "membership_type", "") or ""
+
+        active = getattr(member, "active", True)
+        status = "Aktiv" if active else "Inaktiv"
+
+        created_at = getattr(member, "created_at", "")
+        start_date = str(created_at) if created_at else ""
+
+        return MemberRecord(
+            member_id=member_id,
+            full_name=full_name,
+            phone=phone,
+            email=email,
+            plan=plan,
+            status=status,
+            start_date=start_date,
+        )
 
     def refresh_data(self) -> None:
         self.apply_filters()
