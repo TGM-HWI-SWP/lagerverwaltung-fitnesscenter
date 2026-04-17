@@ -71,6 +71,29 @@ class FitnessCenterService:
     def get_all_members(self) -> List[Member]:
         return self.member_repository.load_all_members()
 
+    def update_member(
+        self,
+        member_id: str,
+        first_name: str,
+        last_name: str,
+        email: str,
+        phone: str = "",
+        membership_type: str = "Standard",
+    ) -> Member:
+        member = self.member_repository.load_member(member_id)
+
+        if not member:
+            raise ValueError(f"Mitglied {member_id} nicht gefunden")
+
+        member.first_name = first_name
+        member.last_name = last_name
+        member.email = email
+        member.phone = phone
+        member.membership_type = membership_type
+
+        self.member_repository.save_member(member)
+        return member
+
     def deactivate_member(self, member_id: str) -> None:
         member = self.member_repository.load_member(member_id)
 
@@ -119,6 +142,29 @@ class FitnessCenterService:
 
     def get_all_employees(self) -> List[Employee]:
         return self.employee_repository.load_all_employees()
+    
+    def update_employee(
+        self,
+        employee_id: str,
+        first_name: str,
+        last_name: str,
+        role: str,
+        email: str,
+        phone: str = "",
+    ) -> Employee:
+        employee = self.employee_repository.load_employee(employee_id)
+
+        if not employee:
+            raise ValueError(f"Mitarbeiter {employee_id} nicht gefunden")
+
+        employee.first_name = first_name
+        employee.last_name = last_name
+        employee.role = role
+        employee.email = email
+        employee.phone = phone
+
+        self.employee_repository.save_employee(employee)
+        return employee
 
     def deactivate_employee(self, employee_id: str) -> None:
         employee = self.employee_repository.load_employee(employee_id)
@@ -172,6 +218,39 @@ class FitnessCenterService:
 
     def get_all_products(self) -> List[Product]:
         return self.product_repository.load_all_products()
+    
+    def update_product(
+        self,
+        product_id: str,
+        name: str,
+        description: str,
+        price: float,
+        category: str = "",
+        sku: str = "",
+        notes: str | None = None,
+    ) -> Product:
+        product = self.product_repository.load_product(product_id)
+
+        if not product:
+            raise ValueError(f"Produkt {product_id} nicht gefunden")
+
+        product.name = name
+        product.description = description
+        product.price = price
+        product.category = category
+        product.sku = sku
+        product.notes = notes
+
+        self.product_repository.save_product(product)
+        return product
+
+    def delete_product(self, product_id: str) -> None:
+        product = self.product_repository.load_product(product_id)
+
+        if not product:
+            raise ValueError(f"Produkt {product_id} nicht gefunden")
+
+        self.product_repository.delete_product(product_id)
 
     def add_stock(
         self,
