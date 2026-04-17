@@ -129,6 +129,28 @@ Persönliches Changelog für [Ivan Strainovic], Rolle: [Projektverantwortung & S
 
 ---
 
+## [v0.3] - 2026-04-17
+
+### Implementiert
+- Controller-Schicht erstellt:
+  - MemberController
+  - EmployeeController
+  - ProductController
+  - EquipmentController
+  - VendingMachineController
+- Verbindung Controller ↔ Service vorbereitet
+- Projekt auf aktuellen Stand von `main` gebracht
+
+### Tests geschrieben
+- Keine
+
+### Commits
+
+### Mergekonflikt(e)
+- `src/domain/member.py`: Konflikt zwischen `id` und `member_id` sowie Zeitstempel (`datetime.now` vs `datetime.utcnow`) beim Merge gelöst. Einheitlich auf `member_id` und `datetime.utcnow` angepasst.
+
+---
+
 ## Zusammenfassung
 
 **Gesamt implementierte Features:** 15+  
