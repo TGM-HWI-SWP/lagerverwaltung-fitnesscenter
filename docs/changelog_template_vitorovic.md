@@ -74,13 +74,33 @@ Persönliches Changelog für [Jovan Vitorovic], Rolle: [Rolle 2 Businesslogik un
 
 ---
 
-## [v0.4] - [Datum]
+## [v0.4] - 2026-04-17
 
 ### Implementiert
-- [Feature/Fix]
+- Service Layer (Business Logic) weiterentwickelt und überprüft
+- Lagerlogik (add_stock, remove_stock) finalisiert
+- Movement-System getestet (automatische Erstellung bei Lagerbewegungen)
+- Report A funktional integriert
+
+### Datenbank
+
+- Supabase-Datenbank bereinigt (alle alten Datensätze gelöscht)
+- Neue Daten für folgende Tabellen erstellt und eingefügt:
+- Equipment
+- Vending Machines
+- Movements
+- Members
+- Products
+- Employees
 
 ### Tests geschrieben
-- [Tests]
+- Unit-Tests für Produkt- und Lagerfunktionen erstellt
+- Teststruktur in mehrere Dateien aufgeteilt (z. B. test_product.py)
+- Testumgebung mit InMemory Repository weiter vorbereitet
+
+### Sonstiges
+- Fehleranalyse bei fehlenden Domain-Dateien (Rolle 1)
+- Workaround für Tests dokumentiert
 
 ### Commits
 ```
