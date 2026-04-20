@@ -26,7 +26,7 @@ Persönliches Changelog für [Jovan Vitorovic], Rolle: [Rolle 2 Businesslogik un
 ```
 
 ### Mergekonflikt(e)
-- [Datei]: [Kurzbeschreibung und Lösung]
+- Keine
 
 ---
 
@@ -70,7 +70,7 @@ Persönliches Changelog für [Jovan Vitorovic], Rolle: [Rolle 2 Businesslogik un
 ```
 
 ### Mergekonflikt(e)
-- [Konflikte, falls vorhanden]
+- Keine
 
 ---
 
@@ -104,29 +104,32 @@ Persönliches Changelog für [Jovan Vitorovic], Rolle: [Rolle 2 Businesslogik un
 
 ### Commits
 ```
-- [Commits]
+- Keine
 ```
 
 ### Mergekonflikt(e)
-- [Konflikte]
+- Keine
 
 ---
 
-## [v0.5] - [Datum]
+## [v0.5] - 2026-04-20
 
 ### Implementiert
-- [Feature/Fix]
+- Fertigstellung von Report A (Lagerbestandsbericht)
+- Anpassungen an der Adapter-Struktur (__init__.py) zur Fehlerbehebung
 
 ### Tests geschrieben
-- [Tests]
+- Testskript für Report A erstellt (test_inventory_report.py)
+- Funktionalität des Lagerberichts erfolgreich überprüft
 
 ### Commits
 ```
-- [Commits]
+- Adding some changes to the init file in the adapters folder
+- Finishing report A
 ```
 
 ### Mergekonflikt(e)
-- [Konflikte]
+- Keine
 
 ---
 
