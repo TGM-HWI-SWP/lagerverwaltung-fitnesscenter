@@ -380,6 +380,14 @@ class FitnessCenterService:
 
     def get_all_equipment(self) -> List[Equipment]:
         return self.equipment_repository.load_all_equipment()
+    
+    def delete_equipment(self, equipment_id: str) -> None:
+        equipment = self.equipment_repository.load_equipment(equipment_id)
+
+        if not equipment:
+            raise ValueError(f"Gerät {equipment_id} nicht gefunden")
+
+        self.equipment_repository.delete_equipment(equipment_id)
 
     def create_machine(
         self,
@@ -444,6 +452,14 @@ class FitnessCenterService:
 
     def get_all_machines(self) -> List[VendingMachine]:
         return self.vending_machine_repository.load_all_machines()
+    
+    def delete_machine(self, machine_id: str) -> None:
+        machine = self.vending_machine_repository.load_machine(machine_id)
+
+        if not machine:
+            raise ValueError(f"Automat {machine_id} nicht gefunden")
+
+        self.vending_machine_repository.delete_machine(machine_id)
     
     def generate_inventory_report(self) -> str:
         products = self.product_repository.load_all_products()

@@ -129,33 +129,124 @@ Persönliches Changelog für [Ivan Strainovic], Rolle: [Projektverantwortung & S
 
 ---
 
-## [v0.3] - 2026-04-17
+## [v0.6] - 2026-03-27
 
 ### Implementiert
-- Controller-Schicht erstellt:
+- Erste Implementierung der Controller-Schicht:
   - MemberController
   - EmployeeController
   - ProductController
   - EquipmentController
   - VendingMachineController
-- Verbindung Controller ↔ Service vorbereitet
-- Projekt auf aktuellen Stand von `main` gebracht
+- Erweiterung der GUI:
+  - Produktseite mit Filter, Suche und Dialogen
+- Vorbereitung der Verbindung GUI ↔ Controller
 
 ### Tests geschrieben
 - Keine
 
 ### Commits
+```
+129944d feat(controller): add member controller
+a7e736e feat(controller): add employee controller
+b81e817c feat(controller): add product controller
+2d158b09 feat(controller): add equipment controller
+7f894bff feat(controller): add vending machine controller
+1a0ecda Feat: GUI erweitert um Produkte-Seite mit Filter, Suche und Dialogen
+bf4bdec Report A implemented. Waiting for Role 1 domain and ports to run tests
+```
+
+### Mergekonflikt(e)
+- Keine
+
+---
+
+## [v0.7] - 2026-04-10
+
+### Implementiert
+- Erweiterung der Controller-Schicht:
+  - MovementController hinzugefügt
+  - ReportController hinzugefügt
+- Strukturierung des controllers-Pakets (__init__ ergänzt)
+- Anpassung der Controller für bessere Integration mit Service Layer
+
+### Tests geschrieben
+- Keine
+
+### Commits
+```
+c7671094 feat(controller): add report controller
+4f57633d feat(controller): add movement controller
+97479f04 feat(controller): add controllers package init
+```
+
+### Mergekonflikt(e)
+- Keine
+
+---
+
+## [v0.8] - 2026-04-17
+
+### Implementiert
+- Vollständige Controller-Schicht implementiert:
+  - MemberController
+  - EmployeeController
+  - ProductController
+  - EquipmentController
+  - VendingMachineController
+  - MovementController
+  - ReportController
+- Anbindung Controller ↔ Service vorbereitet
+- Einheitliche Schnittstelle für UI geschaffen
+- Projektstand mit `main` synchronisiert
+
+### Tests geschrieben
+- Keine
+
+### Commits
+```
+ae568b1 feat(controller): align product controller with service layer
+```
 
 ### Mergekonflikt(e)
 - `src/domain/member.py`: Konflikt zwischen `id` und `member_id` sowie Zeitstempel (`datetime.now` vs `datetime.utcnow`) beim Merge gelöst. Einheitlich auf `member_id` und `datetime.utcnow` angepasst.
 
 ---
 
+## [v0.9] - 2026-04-21
+
+### Implementiert
+- Erweiterung der Service-Schicht:
+  - Update-Funktionalität für Member, Employee und Product
+  - Delete-Funktionalität für Product, Equipment und VendingMachine
+- Erweiterung der Repository-Ports:
+  - Delete-Methoden für Equipment und VendingMachine ergänzt
+- Erweiterung der Controller:
+  - Unterstützung für Update- und Delete-Operationen
+  - Integration von Stock-Management (add_stock / remove_stock)
+- Anpassung der Domain-Modelle auf finale Struktur überprüft
+- Vorbereitung der vollständigen Integration mit GUI (Role 4)
+
+### Tests geschrieben
+- Keine
+
+### Commits
+```
+0df7064 feat: Controller & Service Integration vorbereitet
+ae568b1 feat(controller): align product controller with service layer
+834f63f docs(changelog): update changelog for controller implementation and merge
+```
+
+### Mergekonflikt(e)
+- Keine
+
+---
+
 ## Zusammenfassung
 
-**Gesamt implementierte Features:** 15+  
+**Gesamt implementierte Features:** ~20  
 **Gesamt geschriebene Tests:** 0  
-**Gesamt Commits:** ~20  
+**Gesamt Commits:** ~30 
 **Größte Herausforderung:** Umstellung der gesamten Architektur von Warehouse auf Fitnesscenter + saubere Trennung Domain / Ports / Services  
 **Schönste Code-Zeile:**  
 ```python
@@ -164,4 +255,4 @@ Persönliches Changelog für [Ivan Strainovic], Rolle: [Projektverantwortung & S
 ---
 
 **Changelog erstellt von:** [Ivan Strainovic]  
-**Letzte Aktualisierung:** [20.03.2026]
+**Letzte Aktualisierung:** [21.04.2026]
