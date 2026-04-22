@@ -16,8 +16,8 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ui.auth.auth_service import AuthService
-from ui.main_window import MainWindow
+from src.ui.auth.auth_service import AuthService
+from src.ui.main_window import MainWindow
 
 
 class ForgotPasswordDialog(QDialog):
@@ -143,6 +143,7 @@ class LoginWindow(QWidget):
     def __init__(self) -> None:
         super().__init__()
 
+        self.controller = controller
         self.auth = AuthService()
         self.main_window: MainWindow | None = None
 
@@ -568,7 +569,7 @@ class LoginWindow(QWidget):
             self._set_message(self.reg_msg, message, "error")
 
     def _open_main_window(self) -> None:
-        self.main_window = MainWindow()
+        self.main_window = MainWindow(controller=self.controller)
         self.main_window.show()
         self.close()
 

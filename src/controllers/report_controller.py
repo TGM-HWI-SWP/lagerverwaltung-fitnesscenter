@@ -1,6 +1,5 @@
-def generate_inventory_report(service):
+from typing import Any
+
+
+def generate_inventory_report(service: Any):
     return service.generate_inventory_report()
-
-
-def generate_equipment_status_report(service):
-    return service.generate_equipment_status_report()

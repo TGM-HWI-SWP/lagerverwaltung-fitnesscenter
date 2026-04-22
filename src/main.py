@@ -3,7 +3,7 @@ from pathlib import Path
 
 from PyQt6.QtWidgets import QApplication
 
-from ui.auth.login_window import LoginWindow
+from src.ui.auth.login_window import LoginWindow
 
 
 def load_stylesheet(app: QApplication) -> None:
