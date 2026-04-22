@@ -52,5 +52,38 @@
         "created_at": "2026-04-17 08:13:21",
         "last_login": "2026-04-17 08:13:28",
         "is_active": true
+    },
+    {
+        "username": "Test123",
+        "password": "fae4ee5710378f2aa14e4cf2f6597794cc59263b8546e550e35ec0a845239108",
+        "first_name": "Test123",
+        "last_name": "",
+        "role": "Mitarbeiter",
+        "employee_id": "Test123",
+        "created_at": "2026-04-17 08:25:59",
+        "last_login": "2026-04-17 08:26:05",
+        "is_active": true
+    },
+    {
+        "username": "Vladan4",
+        "password": "55462e45b98397576e9aa42d210238af1392e0c56a22d89c19b7372f1ca8af79",
+        "first_name": "Vladan4",
+        "last_name": "",
+        "role": "Mitarbeiter",
+        "employee_id": "Vladan4",
+        "created_at": "2026-04-20 10:25:05",
+        "last_login": "2026-04-20 10:25:11",
+        "is_active": true
+    },
+    {
+        "username": "Lauren",
+        "password": "fba53459c17f0296673caa3105a0b0ff85e2e4f706122f4801ef1cb0e4e971e9",
+        "first_name": "Lauren",
+        "last_name": "",
+        "role": "Mitarbeiter",
+        "employee_id": "Lauren",
+        "created_at": "2026-04-20 10:28:57",
+        "last_login": "2026-04-20 10:29:45",
+        "is_active": true
     }
 ]
