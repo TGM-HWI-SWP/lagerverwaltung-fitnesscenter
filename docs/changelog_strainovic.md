@@ -242,6 +242,42 @@ ae568b1 feat(controller): align product controller with service layer
 
 ---
 
+## [v0.10] - 2026-04-23
+
+### Implementiert
+- Überarbeitung der Dokumentation:
+  - README.md vollständig an Fitnesscenter-System angepasst
+  - architecture.md finalisiert (Controller + Supabase integriert)
+  - contracts.md an aktuellen Service-Stand angepasst
+  - tests.md aktualisiert (Teststruktur angepasst)
+  - known_issues.md überarbeitet (realer Projektstatus ergänzt)
+  - retrospective.md ausgefüllt und aktualisiert
+- Neue Dokumente erstellt:
+  - CHECKLISTE_fitnesscenter.md (Projektstatus)
+  - Peer_Feedback_Strainovic.md
+- Vereinheitlichung der gesamten Dokumentationsstruktur
+- Anpassung aller Inhalte von Vorlage → reales Projekt (Fitnesscenter)
+
+### Tests geschrieben
+- Keine
+
+### Commits
+```
+Docs: update README to fitnesscenter version
+Docs: finalize architecture documentation
+Docs: update contracts to match service layer
+Docs: adjust tests documentation
+Docs: update known issues
+Docs: complete retrospective
+Docs: add project checklist
+Docs: add peer feedback
+```
+
+### Mergekonflikt(e)
+- Keine
+
+---
+
 ## Zusammenfassung
 
 **Gesamt implementierte Features:** ~20  
@@ -255,4 +291,4 @@ ae568b1 feat(controller): align product controller with service layer
 ---
 
 **Changelog erstellt von:** [Ivan Strainovic]  
-**Letzte Aktualisierung:** [21.04.2026]
+**Letzte Aktualisierung:** [23.04.2026]

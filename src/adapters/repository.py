@@ -1,4 +1,9 @@
-"""Repository Adapter - In-Memory Implementierungen"""
+"""Repository Adapter - In-Memory Implementierungen
+
+Dieses Modul enthält In-Memory Implementierungen der Repository-Interfaces.
+Sie dienen hauptsächlich für Tests und schnelle Entwicklung ohne echte Datenbank.
+"""
+
 
 from typing import Dict, List, Optional
 

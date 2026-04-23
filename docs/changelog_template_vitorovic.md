@@ -133,21 +133,23 @@ Persönliches Changelog für [Jovan Vitorovic], Rolle: [Rolle 2 Businesslogik un
 
 ---
 
-## [v1.0] - [Datum]
+## [v1.0] - 2026-04-22
 
 ### Implementiert
-- [Feature/Fix]
+- Report A (Lagerbestandsbericht) mit Supabase umgesetzt
+- Verbindung zwischen Business Logic und Supabase Repository getestet
+- Ausgabe des Lagerbestands über echtes Datenbanksystem
 
 ### Tests geschrieben
-- [Tests]
+- Test-Script für Report A mit Supabase erstellt und ausgeführt
 
 ### Commits
 ```
-- [Commits]
+- Creating the Report A for the products using the supabase Repository
 ```
 
 ### Mergekonflikt(e)
-- [Konflikte]
+- Keine
 
 ---
 

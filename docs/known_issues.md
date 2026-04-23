@@ -3,51 +3,57 @@
 ## Aktuelle Probleme
 
 ### Kritisch
-- [ ] Keine kritischen Issues momentan
+- [ ] Keine kritischen Issues
 
 ### Hoch
-- [ ] [Issue 1 - Beschreibung, Workaround]
-- [ ] [Issue 2 - Beschreibung, Workaround]
+- [ ] GUI noch nicht vollständig mit Backend (Controller/Service) integriert
+  → Einige UI-Seiten arbeiten noch teilweise mit Demo-Daten
 
 ### Mittel
-- [ ] [Issue 1 - Beschreibung]
-- [ ] [Issue 2 - Beschreibung]
+- [ ] Teilweise fehlende Validierungen in GUI-Dialogen
+- [ ] Testabdeckung nicht vollständig (vor allem Integrationstests)
 
 ### Niedrig
-- [ ] GUI-Styling könnte verbessert werden
-- [ ] [Weitere...]
+- [ ] GUI-Styling kann weiter verbessert werden
+- [ ] Uneinheitliche Benennung einzelner UI-Komponenten
 
 ---
 
 ## Gelöste Issues (Archiv)
 
-### v0.1
-- ✓ Anfangsproblem bei Repository-Erstellung
+### v0.5
+- ✓ Umstellung von Warehouse auf Fitnesscenter abgeschlossen
 
-### v0.2
-- ✓ [Issue] gelöst durch [Lösung]
+### v0.7
+- ✓ Controller-Struktur erweitert und stabilisiert
+
+### v0.8
+- ✓ Mergekonflikt im Member-Domain-Modell gelöst (id → member_id, datetime vereinheitlicht)
 
 ---
 
 ## Bekannte Limitationen
 
-### Features, die absichtlich nicht implementiert sind
-- Benutzer-Authentifizierung (v0.1)
-- Datenbank-Persistenz (erst ab v0.2)
-- Grafische Reports (erst ab v0.4)
-- Mehrsprachigkeit
+### Technisch
+- Supabase-Verbindung erfordert gültige `.env` Konfiguration (kein Fallback)
+- Keine Offline-Nutzung möglich (bei Supabase-Adapter)
+- Keine Pagination in Tabellen implementiert
 
-### Performance-Limitationen
-- In-Memory Repository: max. ~100.000 Produkte pro Session
-- Keine Pagination implementiert
+### Funktional
+- Keine Rollen-/Rechteverwaltung (Admin/User)
+- Keine grafischen Reports (nur textbasierte Reports)
+- Kein Mehrbenutzerbetrieb (Single-User Anwendung)
 
 ---
 
 ## Workarounds
 
-### Issue: [Beschreibung]
-**Workaround:** [Beschreibung des Workarounds]
+### GUI zeigt falsche/alte Daten
+**Workaround:** Anwendung neu starten oder Daten neu laden
+
+### Supabase Verbindung funktioniert nicht
+**Workaround:** `.env` Datei prüfen (SUPABASE_URL, SUPABASE_KEY)
 
 ---
 
-**Letzte Aktualisierung:** 2025-01-20
+**Letzte Aktualisierung:** 2026-04-23

@@ -2,248 +2,292 @@
 
 ## Architektur-Übersicht
 
-Das Projekt folgt der **Port-Adapter-Architektur** (Hexagonal Architecture) für maximale Testbarkeit und Wartbarkeit.
+Das Projekt folgt der **Port-Adapter-Architektur** (Hexagonal Architecture), um eine klare Trennung zwischen GUI, Businesslogik und Datenpersistenz zu erreichen.
+
+Ziele dieser Architektur:
+
+- hohe Testbarkeit
+- klare Verantwortlichkeiten
+- austauschbare Datenzugriffe
+- gute Wartbarkeit und Erweiterbarkeit
+
+---
 
 ## Schichten-Modell
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                    UI-Layer (PyQt6)                     │
-│              WarehouseMainWindow, Dialoge               │
-└──────────────────────┬──────────────────────────────────┘
-                       │
-┌──────────────────────▼──────────────────────────────────┐
-│                  Service-Layer                          │
-│              WarehouseService, BusinessLogic            │
-└──────────────────────┬──────────────────────────────────┘
-                       │
-┌──────────────────────▼──────────────────────────────────┐
-│                  Domain-Layer                           │
-│          Product, Movement, Warehouse (Entities)        │
-└──────────────────────┬──────────────────────────────────┘
-                       │
-        ┌──────────────┴──────────────┐
-        │                             │
-┌───────▼────────┐          ┌────────▼──────────┐
-│  Ports         │          │   Adapters        │
-│  (Abstract)    │          │ (Implementations) │
-│                │          │                   │
-│RepositoryPort  │◄────────►│InMemoryRepository │
-│ReportPort      │          │(sqlite, json, ...)|
-└────────────────┘          └───────────────────┘
+```text
+┌──────────────────────────────────────────────────────────────┐
+│                         UI-Layer (PyQt6)                    │
+│      LoginWindow, MainWindow, Pages, Dialoge, Widgets       │
+└───────────────────────────┬──────────────────────────────────┘
+                            │
+┌───────────────────────────▼──────────────────────────────────┐
+│                        Controller-Layer                      │
+│ member_controller, product_controller, ...                  │
+└───────────────────────────┬──────────────────────────────────┘
+                            │
+┌───────────────────────────▼──────────────────────────────────┐
+│                         Service-Layer                        │
+│                 FitnessCenterService                         │
+└───────────────────────────┬──────────────────────────────────┘
+                            │
+┌───────────────────────────▼──────────────────────────────────┐
+│                          Domain-Layer                        │
+│   Product, Member, Employee, Equipment, VendingMachine,     │
+│   Movement                                                   │
+└───────────────────────────┬──────────────────────────────────┘
+                            │
+          ┌─────────────────┴─────────────────┐
+          │                                   │
+┌─────────▼─────────┐               ┌─────────▼──────────────┐
+│ Ports             │               │ Adapters               │
+│ (Abstraktion)     │◄─────────────►│ (Implementierungen)    │
+│ Repository Ports  │               │ InMemory / Supabase    │
+│ Report Contracts  │               │ Report Adapter         │
+└───────────────────┘               └────────────────────────┘
 ```
 
 ---
 
 ## Komponenten
 
-### 1. Domain Layer (`src/domain/`)
+### 1. Domain Layer (src/domain/)
 
-**Verantwortung:** Reine Geschäftslogik, unabhängig von technischen Details
+**Verantwortung:**  
+Reine fachliche Modelle und Verhaltenslogik, unabhängig von GUI, Datenbank oder Frameworks.
 
-#### `product.py`
-- Klasse: `Product`
-- Attribute: product_id, name, description, price, quantity, category
-- Methoden:
-  - `update_quantity(amount)`
-- Validierung: keine negativen Werte
+#### product.py
+Klasse: Product
 
----
+Attribute:
+- id
+- name
+- description
+- price
+- quantity
+- sku
+- category
+- created_at
+- updated_at
+- notes
 
-#### `movement.py`
-- Klasse: `Movement`
-- Attribute: movement_id, product_id, quantity_change, movement_type, timestamp, performed_by
-
----
-
-#### `member.py`
-- Klasse: `Member`
-- Attribute: member_id, first_name, last_name, email, phone, membership_type, active, created_at
-- Methoden:
-  - `activate()`
-  - `deactivate()`
-  - `full_name()`
+Methoden:
+- update_quantity(amount)
+- get_total_value()
+- is_low_stock()
 
 ---
 
-#### `employee.py`
-- Klasse: `Employee`
-- Attribute: employee_id, first_name, last_name, role, email, phone, active, created_at
-- Methoden:
-  - `activate()`
-  - `deactivate()`
-  - `full_name()`
+#### warehouse.py
+
+Enthält:
+- Movement
+- Warehouse
+
+Movement Attribute:
+- id
+- product_id
+- product_name
+- quantity_change
+- movement_type
+- reason
+- timestamp
+- performed_by
+
+Warehouse:
+Verwaltungsklasse für Produkt- und Bewegungsdaten  
+dient als ergänzende Struktur für Lagerlogik
 
 ---
 
-#### `equipment.py`
-- Klasse: `Equipment`
-- Attribute: equipment_id, name, equipment_type, location, status, assigned_employee_id, created_at
-- Methoden:
-  - `set_status(status)`
-  - `assign_employee(employee_id)`
+#### member.py
+Klasse: Member
+
+Attribute:
+- member_id
+- first_name
+- last_name
+- email
+- phone
+- membership_type
+- active
+- created_at
+
+Methoden:
+- activate()
+- deactivate()
+- full_name()
 
 ---
 
-#### `vending_machine.py`
-- Klasse: `VendingMachine`
-- Attribute: machine_id, location, machine_type, assigned_employee_id, active, created_at
-- Methoden:
-  - `activate()`
-  - `deactivate()`
-  - `assign_employee(employee_id)`
+#### employee.py
+Klasse: Employee
+
+Attribute:
+- employee_id
+- first_name
+- last_name
+- role
+- email
+- phone
+- active
+- created_at
+
+Methoden:
+- activate()
+- deactivate()
+- full_name()
 
 ---
 
-### 2. Ports (`src/ports/`)
+#### equipment.py
+Klasse: Equipment
 
-**Verantwortung:** Schnittstellen (Abstraktion)
+Attribute:
+- equipment_id
+- name
+- equipment_type
+- location
+- status
+- assigned_employee_id
+- created_at
+
+Methoden:
+- set_status(status)
+- assign_employee(employee_id)
+
+---
+
+#### vending_machine.py
+Klasse: VendingMachine
+
+Attribute:
+- machine_id
+- location
+- machine_type
+- assigned_employee_id
+- active
+- created_at
+
+Methoden:
+- activate()
+- deactivate()
+- assign_employee(employee_id)
+
+---
+
+### 2. Ports (src/ports/)
+
+**Verantwortung:**  
+Abstrakte Schnittstellen für Datenzugriff und Reports.
 
 #### Repository Ports
-- `ProductRepositoryPort`
-- `MovementRepositoryPort`
-- `MemberRepositoryPort`
-- `EmployeeRepositoryPort`
-- `EquipmentRepositoryPort`
-- `VendingMachineRepositoryPort`
+- ProductRepositoryPort
+- MovementRepositoryPort
+- MemberRepositoryPort
+- EmployeeRepositoryPort
+- EquipmentRepositoryPort
+- VendingMachineRepositoryPort
 
 #### Typische Methoden
-```python
-save(...)
-load(id)
-load_all()
-delete(id)
-```
+- save_...(entity)
+- load_...(id)
+- load_all_...()
+- delete_...(id)
+
+#### Weitere Ports / Altbestand
+- checkin_repository_port.py
+- membership_repository_port.py
+- report_port.py
 
 ---
 
-#### ReportPort
-```python
-class ReportPort(ABC):
-    @abstractmethod
-    def generate_inventory_report(self) -> list[dict]: ...
+### 3. Adapters (src/adapters/)
 
-    @abstractmethod
-    def generate_equipment_status_report(self) -> list[dict]: ...
-```
+**Verantwortung:**  
+Konkrete Implementierungen der Ports.
 
----
+#### InMemory-Repositories
+- InMemoryProductRepository
+- InMemoryMovementRepository
+- InMemoryMemberRepository
+- InMemoryEmployeeRepository
+- InMemoryEquipmentRepository
+- InMemoryVendingMachineRepository
 
-### 3. Adapters (`src/adapters/`)
-
-**Verantwortung:** Implementierungen der Ports
-
-#### Repository Adapter
-- `InMemoryProductRepository`
-- `InMemoryMemberRepository`
-- `InMemoryEmployeeRepository`
-- `InMemoryEquipmentRepository`
-- `InMemoryVendingMachineRepository`
-
-**Eigenschaften:**
+Eigenschaften:
 - Speicherung im RAM
 - schnell
-- keine Persistenz
+- gut für Tests
+- keine dauerhafte Persistenz
 
----
+#### Supabase-Repositories
+- SupabaseProductRepository
+- SupabaseMovementRepository
+- SupabaseMemberRepository
+- SupabaseEmployeeRepository
+- SupabaseEquipmentRepository
+- SupabaseVendingMachineRepository
+
+Eigenschaften:
+- Persistenz in Supabase
+- produktionsnäher
+- benötigt .env
 
 #### Report Adapter
-- `ConsoleReportAdapter`
-
-**Funktion:**
-- generiert strukturierte Reports
+- ConsoleReportAdapter
 
 ---
 
-### 4. Services (`src/services/`)
+### 4. Services (src/services/)
 
-**Verantwortung:** Businesslogik
+**Verantwortung:**  
+Zentrale Businesslogik und Use Cases.
 
-#### `FitnessCenterService`
-
-##### Member
-- `create_member(...)`
-- `get_member(...)`
-- `get_all_members()`
-- `activate_member(...)`
-- `deactivate_member(...)`
+FitnessCenterService enthält:
+- Member, Employee, Product, Equipment, VendingMachine, Movement, Reports
 
 ---
 
-##### Employee
-- `create_employee(...)`
-- `get_all_employees()`
+### 5. Controller Layer (src/controllers/)
+
+**Verantwortung:**  
+Vermittlung zwischen GUI und Service Layer.
+
+Controller:
+- member_controller.py
+- employee_controller.py
+- product_controller.py
+- equipment_controller.py
+- vending_machine_controller.py
+- movement_controller.py
+- report_controller.py
 
 ---
 
-##### Product
-- `create_product(...)`
-- `add_stock(...)`
-- `remove_stock(...)`
-- `get_all_products()`
+### 6. UI Layer (src/ui/)
+
+**Verantwortung:**  
+Benutzeroberfläche mit PyQt6.
+
+Regeln:
+- keine direkte DB
+- nur Controller/Service
+- keine Businesslogik
 
 ---
 
-##### Equipment
-- `create_equipment(...)`
-- `update_equipment_status(...)`
-- `assign_employee_to_equipment(...)`
-- `get_all_equipment()`
+### 7. Tests (tests/)
 
----
-
-##### VendingMachine
-- `create_machine(...)`
-- `assign_employee_to_machine(...)`
-- `get_all_machines()`
-
----
-
-##### Movement
-- `get_movements()`
-
----
-
-### 5. UI Layer (`src/ui/`)
-
-**Verantwortung:** GUI (PyQt6)
-
-#### Struktur
-- Dashboard
-- Members
-- Employees
-- Products
-- Movements
-- Equipment
-- Vending Machines
-- Reports
-
-#### Regeln
-- GUI nutzt nur Service
-- keine direkte DB-Logik
-
----
-
-### 6. Tests (`tests/`)
-
-#### Unit Tests
-- Domain testen
-- Service testen
-
----
-
-#### Integration Tests
-- komplette Workflows
+- Unit Tests
+- Integration Tests
 
 ---
 
 ### Dependency Injection
 
 ```python
-product_repo = InMemoryProductRepository()
-member_repo = InMemoryMemberRepository()
-
-service = FitnessCenterService(product_repo, member_repo)
+service = FitnessCenterService(...)
 ```
 
 ---
@@ -252,39 +296,39 @@ service = FitnessCenterService(product_repo, member_repo)
 
 ```
 GUI
- ↓
+↓
+Controller
+↓
 Service
- ↓
-Domain
- ↓
-Repository
- ↓
-Speicherung
- ↓
-Antwort an GUI
+↓
+Repository Port
+↓
+Repository Adapter
+↓
+Datenbank / InMemory
+↓
+Antwort zurück an GUI
 ```
 
 ---
 
-### Erweiterungen (Roadmap)
-
-- Datenbank (SQLite / Supabase)
+### Erweiterungen / Roadmap
+- GUI vollständig
+- Tests erweitern
+- Reports
+- Rollen
 - REST API
-- Export (PDF / CSV)
-- Login-System
 
 ---
 
 ### Sicherheit
-
-- Input-Validierung
-- Rollen
-- Logging
+- Validierung
+- Fehlerbehandlung
+- Trennung
 
 ---
 
 ### Dokumentation
-
 - docs/contracts.md
 - docs/architecture.md
 - docs/tests.md
@@ -292,5 +336,5 @@ Antwort an GUI
 
 ---
 
-**Letzte Aktualisierung:** 2026-03-20  
-**Version:** 0.2
+**Letzte Aktualisierung:** 2026-04-23  
+**Version:** 0.9
