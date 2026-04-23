@@ -1,3 +1,5 @@
+# Report A bzw Lagerbestand der Produkte aus Supabase abrufen und anzeigen. Dieser Code verbindet sich mit der Supabase-Datenbank, um die aktuellen Lagerbestände der Produkte abzurufen und einen Bericht zu generieren.
+
 from src.adapters.repository import RepositoryFactory
 from src.adapters.report import ConsoleReportAdapter
 from src.services import FitnessCenterService

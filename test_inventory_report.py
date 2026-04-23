@@ -1,4 +1,4 @@
-# Report A für den Lagerbestand
+# Report A Test für den Lagerbestand
 # Dieser Test erstellt Produkte, fügt Lagerbestand hinzu und generiert einen Bericht über den aktuellen Lagerbestand.
 
 from src.adapters.report import ConsoleReportAdapter

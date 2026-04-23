@@ -1,3 +1,11 @@
+"""Supabase Repository Adapter
+
+Dieses Modul enthält die Implementierungen der Repository-Interfaces
+für die Supabase-Datenbank. Es ermöglicht das Speichern und Laden
+von Daten über die Supabase API.
+"""
+
+
 import os
 from datetime import datetime
 from typing import List, Optional
