@@ -335,27 +335,20 @@ Beispiel-Format:
 ### Alle Tests
 
 ```bash
-pytest
+python -m pytest -v
 ```
 
 ### Unit Tests ausführen
 
 ```bash
-pytest tests/unit/ -v
+python -m pytest tests/unit/ -v
 ```
 
 ### Integration Tests
 
 ```bash
-pytest tests/integration/ -v
+python -m pytest tests/integration/ -v
 ```
-
-### Mit Coverage
-
-```bash
-pytest --cov=src tests/
-```
----
 
 ## Reports
 
