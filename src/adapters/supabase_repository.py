@@ -30,6 +30,7 @@ load_dotenv()
 
 
 def _create_supabase_client() -> Client:
+    """Erstellt und validiert einen Supabase-Client aus Umgebungsvariablen."""
     url = os.getenv("SUPABASE_URL")
     key = os.getenv("SUPABASE_KEY")
 
@@ -40,10 +41,14 @@ def _create_supabase_client() -> Client:
 
 
 class SupabaseProductRepository(ProductRepositoryPort):
+    """Repository für Produkte mit Supabase-Anbindung."""
+
     def __init__(self):
+        """Initialisiert den Supabase-Client."""
         self.client = _create_supabase_client()
 
     def save_product(self, product: Product) -> None:
+        """Speichert oder aktualisiert ein Produkt in der Datenbank."""
         data = {
             "id": product.id,
             "name": product.name,
@@ -59,6 +64,7 @@ class SupabaseProductRepository(ProductRepositoryPort):
         self.client.table("products").upsert(data).execute()
 
     def load_product(self, product_id: str) -> Optional[Product]:
+        """Lädt ein Produkt anhand der ID."""
         response = (
             self.client.table("products").select("*").eq("id", product_id).execute()
         )
@@ -81,6 +87,7 @@ class SupabaseProductRepository(ProductRepositoryPort):
         )
 
     def load_all_products(self) -> List[Product]:
+        """Lädt alle Produkte aus der Datenbank."""
         response = self.client.table("products").select("*").execute()
 
         products: List[Product] = []
@@ -103,14 +110,19 @@ class SupabaseProductRepository(ProductRepositoryPort):
         return products
 
     def delete_product(self, product_id: str) -> None:
+        """Löscht ein Produkt anhand der ID."""
         self.client.table("products").delete().eq("id", product_id).execute()
 
 
 class SupabaseMovementRepository(MovementRepositoryPort):
+    """Repository für Lagerbewegungen mit Supabase."""
+
     def __init__(self):
+        """Initialisiert den Supabase-Client."""
         self.client = _create_supabase_client()
 
     def save_movement(self, movement: Movement) -> None:
+        """Speichert eine Bewegung."""
         data = {
             "id": movement.id,
             "product_id": movement.product_id,
@@ -124,6 +136,7 @@ class SupabaseMovementRepository(MovementRepositoryPort):
         self.client.table("movements").insert(data).execute()
 
     def load_movements(self) -> List[Movement]:
+        """Lädt alle Bewegungen."""
         response = self.client.table("movements").select("*").execute()
 
         movements: List[Movement] = []
@@ -145,10 +158,14 @@ class SupabaseMovementRepository(MovementRepositoryPort):
 
 
 class SupabaseMemberRepository(MemberRepositoryPort):
+    """Repository für Mitglieder mit Supabase."""
+
     def __init__(self):
+        """Initialisiert den Supabase-Client."""
         self.client = _create_supabase_client()
 
     def save_member(self, member: Member) -> None:
+        """Speichert oder aktualisiert ein Mitglied."""
         data = {
             "member_id": member.member_id,
             "first_name": member.first_name,
@@ -162,6 +179,7 @@ class SupabaseMemberRepository(MemberRepositoryPort):
         self.client.table("members").upsert(data).execute()
 
     def load_member(self, member_id: str) -> Optional[Member]:
+        """Lädt ein Mitglied anhand der ID."""
         response = (
             self.client.table("members")
             .select("*")
@@ -185,6 +203,7 @@ class SupabaseMemberRepository(MemberRepositoryPort):
         )
 
     def load_all_members(self) -> List[Member]:
+        """Lädt alle Mitglieder."""
         response = self.client.table("members").select("*").execute()
 
         members: List[Member] = []
@@ -205,14 +224,19 @@ class SupabaseMemberRepository(MemberRepositoryPort):
         return members
 
     def delete_member(self, member_id: str) -> None:
+        """Löscht ein Mitglied."""
         self.client.table("members").delete().eq("member_id", member_id).execute()
 
 
 class SupabaseEmployeeRepository(EmployeeRepositoryPort):
+    """Repository für Mitarbeiter mit Supabase."""
+
     def __init__(self):
+        """Initialisiert den Supabase-Client."""
         self.client = _create_supabase_client()
 
     def save_employee(self, employee: Employee) -> None:
+        """Speichert oder aktualisiert einen Mitarbeiter."""
         data = {
             "employee_id": employee.employee_id,
             "first_name": employee.first_name,
@@ -226,6 +250,7 @@ class SupabaseEmployeeRepository(EmployeeRepositoryPort):
         self.client.table("employees").upsert(data).execute()
 
     def load_employee(self, employee_id: str) -> Optional[Employee]:
+        """Lädt einen Mitarbeiter anhand der ID."""
         response = (
             self.client.table("employees")
             .select("*")
@@ -249,6 +274,7 @@ class SupabaseEmployeeRepository(EmployeeRepositoryPort):
         )
 
     def load_all_employees(self) -> List[Employee]:
+        """Lädt alle Mitarbeiter."""
         response = self.client.table("employees").select("*").execute()
 
         employees: List[Employee] = []
@@ -269,14 +295,19 @@ class SupabaseEmployeeRepository(EmployeeRepositoryPort):
         return employees
 
     def delete_employee(self, employee_id: str) -> None:
+        """Löscht einen Mitarbeiter."""
         self.client.table("employees").delete().eq("employee_id", employee_id).execute()
 
 
 class SupabaseEquipmentRepository(EquipmentRepositoryPort):
+    """Repository für Equipment mit Supabase."""
+
     def __init__(self):
+        """Initialisiert den Supabase-Client."""
         self.client = _create_supabase_client()
 
     def save_equipment(self, equipment: Equipment) -> None:
+        """Speichert oder aktualisiert Equipment."""
         data = {
             "equipment_id": equipment.equipment_id,
             "name": equipment.name,
@@ -289,6 +320,7 @@ class SupabaseEquipmentRepository(EquipmentRepositoryPort):
         self.client.table("equipment").upsert(data).execute()
 
     def load_equipment(self, equipment_id: str) -> Optional[Equipment]:
+        """Lädt Equipment anhand der ID."""
         response = (
             self.client.table("equipment")
             .select("*")
@@ -311,6 +343,7 @@ class SupabaseEquipmentRepository(EquipmentRepositoryPort):
         )
 
     def load_all_equipment(self) -> List[Equipment]:
+        """Lädt gesamtes Equipment."""
         response = self.client.table("equipment").select("*").execute()
 
         equipment_list: List[Equipment] = []
@@ -330,14 +363,19 @@ class SupabaseEquipmentRepository(EquipmentRepositoryPort):
         return equipment_list
 
     def delete_equipment(self, equipment_id: str) -> None:
+        """Löscht Equipment."""
         self.client.table("equipment").delete().eq("equipment_id", equipment_id).execute()
 
 
 class SupabaseVendingMachineRepository(VendingMachineRepositoryPort):
+    """Repository für Verkaufsautomaten mit Supabase."""
+
     def __init__(self):
+        """Initialisiert den Supabase-Client."""
         self.client = _create_supabase_client()
 
     def save_machine(self, machine: VendingMachine) -> None:
+        """Speichert oder aktualisiert einen Automaten."""
         data = {
             "machine_id": machine.machine_id,
             "location": machine.location,
@@ -349,6 +387,7 @@ class SupabaseVendingMachineRepository(VendingMachineRepositoryPort):
         self.client.table("vending_machines").upsert(data).execute()
 
     def load_machine(self, machine_id: str) -> Optional[VendingMachine]:
+        """Lädt einen Automaten anhand der ID."""
         response = (
             self.client.table("vending_machines")
             .select("*")
@@ -370,6 +409,7 @@ class SupabaseVendingMachineRepository(VendingMachineRepositoryPort):
         )
 
     def load_all_machines(self) -> List[VendingMachine]:
+        """Lädt alle Automaten."""
         response = self.client.table("vending_machines").select("*").execute()
 
         machines: List[VendingMachine] = []
@@ -388,4 +428,5 @@ class SupabaseVendingMachineRepository(VendingMachineRepositoryPort):
         return machines
 
     def delete_machine(self, machine_id: str) -> None:
+        """Löscht einen Automaten."""
         self.client.table("vending_machines").delete().eq("machine_id", machine_id).execute()

@@ -5,14 +5,33 @@ from ..ports.report_port import ReportPort
 
 
 class ConsoleReportAdapter(ReportPort):
-    """Report-Adapter für Konsolenausgabe"""
+    """
+    Adapter zur Erstellung von Textberichten für die Konsole.
+
+    Verwaltet Produkte und Bewegungen und stellt Methoden zur
+    Generierung von Lager- und Bewegungsberichten bereit.
+    """
 
     def __init__(self, products: Dict = None, movements: list = None):
+        """
+        Initialisiert den Adapter mit Produkten und Bewegungen.
+
+        Args:
+            products (Dict): Produkte im Lager (optional).
+            movements (list): Liste der Lagerbewegungen (optional).
+        """
         self.products = products or {}
         self.movements = movements or []
 
     def generate_inventory_report(self) -> str:
-        """Lagerbestandsbericht als Text generieren"""
+        """
+        Erstellt einen formatierten Bericht über den aktuellen Lagerbestand.
+
+        Enthält Produktinformationen sowie den Gesamtwert des Lagers.
+
+        Returns:
+            str: Lagerbestandsbericht als Text.
+        """
         if not self.products:
             return "Lager ist leer.\n"
 
@@ -38,7 +57,15 @@ class ConsoleReportAdapter(ReportPort):
         return report
 
     def generate_movement_report(self) -> str:
-        """Bewegungsprotokoll als Text generieren"""
+        """
+        Erstellt ein Protokoll aller Lagerbewegungen.
+
+        Listet Bewegungen chronologisch mit Details wie Produkt,
+        Typ, Menge und ausführender Person auf.
+
+        Returns:
+            str: Bewegungsbericht als Text.
+        """
         if not self.movements:
             return "Keine Lagerbewegungen vorhanden.\n"
 

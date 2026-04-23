@@ -1,4 +1,14 @@
-# Report A bzw Lagerbestand der Produkte aus Supabase abrufen und anzeigen. Dieser Code verbindet sich mit der Supabase-Datenbank, um die aktuellen Lagerbestände der Produkte abzurufen und einen Bericht zu generieren.
+"""Report A - Lagerbestandsbericht aus Supabase
+
+Dieses Script verbindet sich mit der Supabase-Datenbank und generiert
+einen Lagerbestandsbericht aller Produkte.
+
+Ablauf:
+- Initialisierung der Supabase-Repositories
+- Übergabe an die Business-Logik (FitnessCenterService)
+- Generierung des Inventory Reports (Report A)
+- Ausgabe des Berichts in der Konsole
+"""
 
 from src.adapters.repository import RepositoryFactory
 from src.adapters.report import ConsoleReportAdapter
@@ -6,6 +16,12 @@ from src.services import FitnessCenterService
 
 
 def main():
+    """Startet die Generierung des Lagerbestandsberichts aus Supabase.
+
+    Erstellt alle benötigten Repositories, initialisiert den Service
+    und gibt den generierten Bericht auf der Konsole aus.
+    """
+
     # Supabase Repositories
     product_repo = RepositoryFactory.create_product_repository("supabase")
     movement_repo = RepositoryFactory.create_movement_repository("supabase")
