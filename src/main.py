@@ -3,11 +3,21 @@ from pathlib import Path
 
 from PyQt6.QtWidgets import QApplication
 
+from src.adapters.report import ConsoleReportAdapter
+from src.adapters.supabase_repository import (
+    SupabaseEmployeeRepository,
+    SupabaseEquipmentRepository,
+    SupabaseMemberRepository,
+    SupabaseMovementRepository,
+    SupabaseProductRepository,
+    SupabaseVendingMachineRepository,
+)
+from src.services import FitnessCenterService
 from src.ui.auth.login_window import LoginWindow
 
 
 def load_stylesheet(app: QApplication) -> None:
-    """Lädt das QSS-Stylesheet der Anwendung."""
+    """Lädt das globale QSS-Stylesheet der Anwendung."""
     qss_path = Path(__file__).parent / "ui" / "styles" / "main.qss"
 
     if qss_path.exists():
@@ -17,8 +27,29 @@ def load_stylesheet(app: QApplication) -> None:
         print(f"Warnung: Stylesheet nicht gefunden: {qss_path}")
 
 
+def build_service() -> FitnessCenterService:
+    """Erstellt den zentralen Service mit allen benötigten Adaptern."""
+    product_repository = SupabaseProductRepository()
+    movement_repository = SupabaseMovementRepository()
+    member_repository = SupabaseMemberRepository()
+    employee_repository = SupabaseEmployeeRepository()
+    equipment_repository = SupabaseEquipmentRepository()
+    vending_machine_repository = SupabaseVendingMachineRepository()
+    report_adapter = ConsoleReportAdapter()
+
+    return FitnessCenterService(
+        product_repository=product_repository,
+        movement_repository=movement_repository,
+        member_repository=member_repository,
+        employee_repository=employee_repository,
+        equipment_repository=equipment_repository,
+        vending_machine_repository=vending_machine_repository,
+        report_adapter=report_adapter,
+    )
+
+
 def main() -> None:
-    """Startpunkt der Anwendung."""
+    """Startet die GUI-Anwendung."""
     app = QApplication(sys.argv)
 
     app.setApplicationName("FitnessCenter Lagerverwaltung")
@@ -26,7 +57,9 @@ def main() -> None:
 
     load_stylesheet(app)
 
-    window = LoginWindow()
+    service = build_service()
+
+    window = LoginWindow(controller=service)
     window.show()
 
     sys.exit(app.exec())

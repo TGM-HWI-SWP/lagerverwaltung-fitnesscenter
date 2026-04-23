@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (
@@ -21,9 +22,10 @@ from src.ui.main_window import MainWindow
 
 
 class ForgotPasswordDialog(QDialog):
-    """Dialog zum Zurücksetzen des Passworts."""
+    """Dialog zum Zurücksetzen eines Passworts."""
 
     def __init__(self, auth_service: AuthService, parent: QWidget | None = None) -> None:
+        """Initialisiert den Reset-Dialog."""
         super().__init__(parent)
 
         self.auth_service = auth_service
@@ -36,12 +38,15 @@ class ForgotPasswordDialog(QDialog):
         self._build_ui()
 
     def _load_styles(self) -> None:
+        """Lädt das Stylesheet des Dialogs."""
         qss_path = Path(__file__).resolve().parent.parent / "styles" / "auth.qss"
+
         if qss_path.exists():
             with qss_path.open("r", encoding="utf-8") as file:
                 self.setStyleSheet(file.read())
 
     def _build_ui(self) -> None:
+        """Erstellt die Oberfläche des Dialogs."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 24, 24, 24)
         layout.setSpacing(14)
@@ -96,6 +101,7 @@ class ForgotPasswordDialog(QDialog):
         layout.addLayout(button_row)
 
     def handle_reset(self) -> None:
+        """Prüft die Eingaben und setzt das Passwort zurück."""
         username = self.username_input.text().strip()
         new_password = self.new_password_input.text().strip()
         confirm_password = self.confirm_password_input.text().strip()
@@ -131,6 +137,7 @@ class ForgotPasswordDialog(QDialog):
             self._set_message(message, "error")
 
     def _set_message(self, text: str, msg_type: str) -> None:
+        """Zeigt eine Meldung im Dialog an."""
         self.message_label.setText(text)
         self.message_label.setProperty("state", "success" if msg_type == "success" else "error")
         self.message_label.style().unpolish(self.message_label)
@@ -138,9 +145,10 @@ class ForgotPasswordDialog(QDialog):
 
 
 class LoginWindow(QWidget):
-    """Reduziertes, modernes Login-/Registrierungsfenster."""
+    """Fenster für Login, Registrierung und Sitzungsauswahl."""
 
-    def __init__(self) -> None:
+    def __init__(self, controller: Any | None = None) -> None:
+        """Initialisiert das Anmeldefenster."""
         super().__init__()
 
         self.controller = controller
@@ -158,6 +166,7 @@ class LoginWindow(QWidget):
         self._show_initial_page()
 
     def _build_ui(self) -> None:
+        """Erstellt die Oberfläche des Fensters."""
         root_layout = QVBoxLayout(self)
         root_layout.setContentsMargins(40, 30, 40, 30)
         root_layout.setSpacing(0)
@@ -192,6 +201,7 @@ class LoginWindow(QWidget):
         root_layout.addStretch()
 
     def _load_styles(self) -> None:
+        """Lädt das Auth-Stylesheet."""
         qss_path = Path(__file__).resolve().parent.parent / "styles" / "auth.qss"
 
         if qss_path.exists():
@@ -199,6 +209,7 @@ class LoginWindow(QWidget):
                 self.setStyleSheet(file.read())
 
     def _show_initial_page(self) -> None:
+        """Zeigt die passende Startseite an."""
         remembered_user = self.auth.get_logged_in_user()
 
         if remembered_user:
@@ -210,6 +221,7 @@ class LoginWindow(QWidget):
             self.login_user.setFocus()
 
     def _create_session_page(self) -> QWidget:
+        """Erstellt die Seite für gespeicherte Sitzungen."""
         widget = QWidget()
         layout = QVBoxLayout(widget)
         layout.setSpacing(14)
@@ -263,6 +275,7 @@ class LoginWindow(QWidget):
         return widget
 
     def _create_login_page(self) -> QWidget:
+        """Erstellt die Login-Seite."""
         widget = QWidget()
         layout = QVBoxLayout(widget)
         layout.setSpacing(14)
@@ -328,6 +341,7 @@ class LoginWindow(QWidget):
         return widget
 
     def _create_register_page(self) -> QWidget:
+        """Erstellt die Registrierungsseite."""
         widget = QWidget()
         layout = QVBoxLayout(widget)
         layout.setSpacing(14)
@@ -411,48 +425,74 @@ class LoginWindow(QWidget):
         return widget
 
     def _switch_page(self, index: int) -> None:
-        self.stack.setCurrentIndex(index)
-        self._clear_messages()
+        """Wechselt zwischen den Auth-Seiten."""
+        if 0 <= index < self.stack.count():
+            self.stack.setCurrentIndex(index)
+            self._clear_messages()
+
+            if index == 1:
+                self.login_user.setFocus()
+            elif index == 2:
+                self.reg_user.setFocus()
 
     def _clear_messages(self) -> None:
+        """Leert alle Meldungsfelder."""
         self.login_msg.setText("")
         self.reg_msg.setText("")
         self.session_message_label.setText("")
 
+    def _set_password_visibility(
+        self,
+        inputs: list[QLineEdit],
+        visible: bool,
+    ) -> None:
+        """Setzt die Sichtbarkeit von Passwortfeldern."""
+        echo_mode = (
+            QLineEdit.EchoMode.Normal if visible else QLineEdit.EchoMode.Password
+        )
+        for input_field in inputs:
+            input_field.setEchoMode(echo_mode)
+
     def _toggle_login_password(self) -> None:
-        if self.login_pass.echoMode() == QLineEdit.EchoMode.Password:
-            self.login_pass.setEchoMode(QLineEdit.EchoMode.Normal)
-        else:
-            self.login_pass.setEchoMode(QLineEdit.EchoMode.Password)
+        """Schaltet die Sichtbarkeit des Login-Passworts um."""
+        visible = self.login_pass.echoMode() == QLineEdit.EchoMode.Password
+        self._set_password_visibility([self.login_pass], visible)
 
     def _toggle_register_passwords(self) -> None:
-        if self.reg_pass.echoMode() == QLineEdit.EchoMode.Password:
-            self.reg_pass.setEchoMode(QLineEdit.EchoMode.Normal)
-            self.reg_pass_confirm.setEchoMode(QLineEdit.EchoMode.Normal)
-        else:
-            self.reg_pass.setEchoMode(QLineEdit.EchoMode.Password)
-            self.reg_pass_confirm.setEchoMode(QLineEdit.EchoMode.Password)
+        """Schaltet die Sichtbarkeit der Registrierungs-Passwörter um."""
+        visible = self.reg_pass.echoMode() == QLineEdit.EchoMode.Password
+        self._set_password_visibility([self.reg_pass, self.reg_pass_confirm], visible)
 
     def _continue_as_remembered_user(self) -> None:
+        """Setzt die Anmeldung mit der gespeicherten Sitzung fort."""
         remembered_user = self.auth.get_logged_in_user()
 
         if remembered_user:
-            self._set_message(self.session_message_label, f"Anmeldung als {remembered_user} ...", "success")
+            self._set_message(
+                self.session_message_label,
+                f"Anmeldung als {remembered_user} ...",
+                "success",
+            )
             QTimer.singleShot(600, self._open_main_window)
         else:
-            self._set_message(self.session_message_label, "Keine gespeicherte Sitzung gefunden.", "error")
+            self._set_message(
+                self.session_message_label,
+                "Keine gespeicherte Sitzung gefunden.",
+                "error",
+            )
             self._switch_page(1)
 
     def _switch_user(self) -> None:
+        """Entfernt die gespeicherte Sitzung und öffnet die Login-Seite."""
         self.auth.clear_session()
         self.login_user.clear()
         self.login_pass.clear()
         self.remember_me_checkbox.setChecked(False)
         self._switch_page(1)
-        self.login_user.setFocus()
 
     @staticmethod
     def evaluate_password_strength_static(password: str) -> tuple[str, dict[str, bool]]:
+        """Bewertet die Stärke eines Passworts."""
         rules = {
             "length": len(password) >= 8,
             "upper": any(char.isupper() for char in password),
@@ -472,6 +512,7 @@ class LoginWindow(QWidget):
         return strength, rules
 
     def update_password_strength(self) -> None:
+        """Aktualisiert die Passwortbewertung in der Registrierung."""
         password = self.reg_pass.text()
         strength, rules = self.evaluate_password_strength_static(password)
 
@@ -485,31 +526,51 @@ class LoginWindow(QWidget):
         self._update_rule_label(self.password_rule_number, rules["number"])
         self._update_rule_label(self.password_rule_special, rules["special"])
 
+    def _reset_password_strength_ui(self) -> None:
+        """Setzt die Passwortanzeige auf den Anfangszustand zurück."""
+        self.password_strength_label.setText("Passwort-Stärke: -")
+        self.password_strength_label.setProperty("strength", "")
+        self.password_strength_label.style().unpolish(self.password_strength_label)
+        self.password_strength_label.style().polish(self.password_strength_label)
+
+        self._update_rule_label(self.password_rule_length, False)
+        self._update_rule_label(self.password_rule_upper, False)
+        self._update_rule_label(self.password_rule_number, False)
+        self._update_rule_label(self.password_rule_special, False)
+
     def _update_rule_label(self, label: QLabel, fulfilled: bool) -> None:
+        """Aktualisiert den Zustand eines Regel-Labels."""
         label.setProperty("fulfilled", fulfilled)
         label.style().unpolish(label)
         label.style().polish(label)
 
     def open_forgot_password_dialog(self) -> None:
+        """Öffnet den Dialog zum Zurücksetzen des Passworts."""
         dialog = ForgotPasswordDialog(self.auth, self)
         dialog.exec()
 
     def handle_login(self) -> None:
+        """Prüft die Login-Eingaben und startet die Anmeldung."""
         user = self.login_user.text().strip()
-        pw = self.login_pass.text().strip()
+        password = self.login_pass.text().strip()
 
-        if not user or not pw:
-            self._set_message(self.login_msg, "Bitte Benutzername und Passwort eingeben.", "error")
+        if not user or not password:
+            self._set_message(
+                self.login_msg,
+                "Bitte Benutzername und Passwort eingeben.",
+                "error",
+            )
             return
 
         self.login_button.setEnabled(False)
         self.login_button.setText("Anmeldung läuft ...")
         self._set_message(self.login_msg, "Zugangsdaten werden geprüft ...", "success")
 
-        QTimer.singleShot(900, lambda: self._finish_login(user, pw))
+        QTimer.singleShot(900, lambda: self._finish_login(user, password))
 
-    def _finish_login(self, user: str, pw: str) -> None:
-        if self.auth.login(user, pw):
+    def _finish_login(self, user: str, password: str) -> None:
+        """Schließt den Login-Vorgang ab."""
+        if self.auth.login(user, password):
             self._set_message(self.login_msg, "Erfolgreich eingeloggt.", "success")
 
             if self.remember_me_checkbox.isChecked():
@@ -525,6 +586,7 @@ class LoginWindow(QWidget):
             self.login_button.setText("Anmelden")
 
     def handle_register(self) -> None:
+        """Prüft die Eingaben und registriert einen Benutzer."""
         username = self.reg_user.text().strip()
         password = self.reg_pass.text().strip()
         confirm_password = self.reg_pass_confirm.text().strip()
@@ -535,7 +597,11 @@ class LoginWindow(QWidget):
             return
 
         if len(username) < 3:
-            self._set_message(self.reg_msg, "Der Benutzername muss mindestens 3 Zeichen lang sein.", "error")
+            self._set_message(
+                self.reg_msg,
+                "Der Benutzername muss mindestens 3 Zeichen lang sein.",
+                "error",
+            )
             return
 
         if password != confirm_password:
@@ -561,7 +627,7 @@ class LoginWindow(QWidget):
             self.reg_user.clear()
             self.reg_pass.clear()
             self.reg_pass_confirm.clear()
-            self.password_strength_label.setText("Passwort-Stärke: -")
+            self._reset_password_strength_ui()
             self.login_user.setText(username)
 
             QTimer.singleShot(800, lambda: self._switch_page(1))
@@ -569,11 +635,13 @@ class LoginWindow(QWidget):
             self._set_message(self.reg_msg, message, "error")
 
     def _open_main_window(self) -> None:
+        """Öffnet das Hauptfenster nach erfolgreicher Anmeldung."""
         self.main_window = MainWindow(controller=self.controller)
         self.main_window.show()
         self.close()
 
     def _set_message(self, label: QLabel, text: str, msg_type: str) -> None:
+        """Zeigt eine Meldung mit Statusstil an."""
         label.setText(text)
         label.setProperty("state", "success" if msg_type == "success" else "error")
         label.style().unpolish(label)

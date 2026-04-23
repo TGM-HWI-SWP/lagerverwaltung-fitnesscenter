@@ -24,14 +24,16 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ui.widgets.stat_card import StatCard
+from src.ui.widgets.stat_card import StatCard
 
 
 class ProductDialog(QDialog):
     """Dialog zum Hinzufügen oder Bearbeiten eines Produkts."""
 
-    def __init__(self, parent=None, product_data: dict[str, Any] | None = None) -> None:
+    def __init__(self, parent: QWidget | None = None, product_data: dict[str, Any] | None = None) -> None:
+        """Initialisiert den Produktdialog."""
         super().__init__(parent)
+
         self.product_data = product_data
         self.is_edit_mode = product_data is not None
 
@@ -46,6 +48,7 @@ class ProductDialog(QDialog):
         self._fill_data_if_needed()
 
     def _create_ui(self) -> None:
+        """Erstellt die Oberfläche des Dialogs."""
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(24, 24, 24, 24)
         main_layout.setSpacing(18)
@@ -134,6 +137,7 @@ class ProductDialog(QDialog):
         main_layout.addLayout(button_row)
 
     def _fill_data_if_needed(self) -> None:
+        """Füllt den Dialog im Bearbeitungsmodus mit vorhandenen Daten."""
         if not self.product_data:
             return
 
@@ -152,8 +156,10 @@ class ProductDialog(QDialog):
 
         if self.is_edit_mode:
             self.id_input.setReadOnly(True)
+            self.quantity_input.setEnabled(False)
 
     def _validate_and_accept(self) -> None:
+        """Prüft die Eingaben und bestätigt den Dialog."""
         if not self.id_input.text().strip():
             QMessageBox.warning(self, "Fehlende Eingabe", "Bitte eine Produkt-ID angeben.")
             self.id_input.setFocus()
@@ -164,9 +170,20 @@ class ProductDialog(QDialog):
             self.name_input.setFocus()
             return
 
+        if not self.description_input.text().strip():
+            QMessageBox.warning(self, "Fehlende Eingabe", "Bitte eine Beschreibung angeben.")
+            self.description_input.setFocus()
+            return
+
+        if self.price_input.value() <= 0:
+            QMessageBox.warning(self, "Ungültiger Preis", "Bitte einen Preis größer als 0 eingeben.")
+            self.price_input.setFocus()
+            return
+
         self.accept()
 
     def get_data(self) -> dict[str, Any]:
+        """Gibt die eingegebenen Produktdaten zurück."""
         return {
             "id": self.id_input.text().strip(),
             "name": self.name_input.text().strip(),
@@ -184,11 +201,12 @@ class StockDialog(QDialog):
 
     def __init__(
         self,
-        parent=None,
+        parent: QWidget | None = None,
         product_id: str = "",
         product_name: str = "",
         current_quantity: int = 0,
     ) -> None:
+        """Initialisiert den Bestandsdialog."""
         super().__init__(parent)
 
         self.product_id = product_id
@@ -202,6 +220,7 @@ class StockDialog(QDialog):
         self._create_ui()
 
     def _create_ui(self) -> None:
+        """Erstellt die Oberfläche des Bestandsdialogs."""
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(24, 24, 24, 24)
         main_layout.setSpacing(18)
@@ -253,6 +272,7 @@ class StockDialog(QDialog):
         main_layout.addLayout(button_row)
 
     def _validate_and_accept(self) -> None:
+        """Prüft die Eingaben und bestätigt den Dialog."""
         if not self.reason_input.text().strip():
             QMessageBox.warning(self, "Fehlende Eingabe", "Bitte einen Grund angeben.")
             self.reason_input.setFocus()
@@ -270,6 +290,7 @@ class StockDialog(QDialog):
         self.accept()
 
     def get_data(self) -> dict[str, Any]:
+        """Gibt die Daten der Bestandsänderung zurück."""
         mode = self.mode_input.currentText()
         amount = self.amount_input.value()
         signed_amount = amount if mode == "Wareneingang" else -amount
@@ -301,7 +322,9 @@ class ProductsTableDialog(QDialog):
     ]
 
     def __init__(self, parent: QWidget | None = None, products: list[dict[str, Any]] | None = None) -> None:
+        """Initialisiert den Tabellen-Dialog."""
         super().__init__(parent)
+
         self.products = products or []
 
         self.setWindowTitle("Produktübersicht - vergrößerte Ansicht")
@@ -312,6 +335,7 @@ class ProductsTableDialog(QDialog):
         self._populate_table()
 
     def _create_ui(self) -> None:
+        """Erstellt die Oberfläche der großen Tabellenansicht."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(18, 18, 18, 18)
         layout.setSpacing(12)
@@ -348,8 +372,10 @@ class ProductsTableDialog(QDialog):
         layout.addLayout(button_row)
 
     def _populate_table(self) -> None:
+        """Füllt die Tabelle mit allen übergebenen Produkten."""
         self.table.setSortingEnabled(False)
         self.table.setRowCount(len(self.products))
+        self.table.clearContents()
 
         for row, product in enumerate(self.products):
             values = [
@@ -381,7 +407,7 @@ class ProductsTableDialog(QDialog):
 
 
 class ProductsPage(QWidget):
-    """Professionelle Produktseite mit großer Tabellenansicht."""
+    """Seite zur Verwaltung von Produkten und Lagerbeständen."""
 
     TABLE_COLUMNS = [
         "ID",
@@ -394,8 +420,10 @@ class ProductsPage(QWidget):
         "Notizen",
     ]
 
-    def __init__(self, controller=None) -> None:
+    def __init__(self, controller: Any | None = None) -> None:
+        """Initialisiert die Produktseite."""
         super().__init__()
+
         self.controller = controller
         self._all_products: list[dict[str, Any]] = []
         self._filtered_products: list[dict[str, Any]] = []
@@ -404,6 +432,7 @@ class ProductsPage(QWidget):
         self.refresh_data()
 
     def _create_ui(self) -> None:
+        """Erstellt die komplette Oberfläche der Seite."""
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(24, 24, 24, 24)
         main_layout.setSpacing(20)
@@ -413,6 +442,7 @@ class ProductsPage(QWidget):
         main_layout.addWidget(self._create_table_card(), 1)
 
     def _create_top_bar(self) -> QWidget:
+        """Erstellt Suche, Filter und Aktionsbuttons."""
         card = QFrame()
         card.setObjectName("dashboardBottomCard")
 
@@ -448,6 +478,7 @@ class ProductsPage(QWidget):
         self.stock_filter.currentTextChanged.connect(self._apply_filters)
 
         self.add_button = QPushButton("➕ Produkt hinzufügen")
+        self.add_button.setObjectName("primaryButton")
         self.add_button.clicked.connect(self._open_add_dialog)
 
         self.edit_button = QPushButton("✏ Bearbeiten")
@@ -482,6 +513,7 @@ class ProductsPage(QWidget):
         return card
 
     def _create_stats_row(self) -> QWidget:
+        """Erstellt die Kennzahlenkarten."""
         wrapper = QWidget()
         layout = QGridLayout(wrapper)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -527,6 +559,7 @@ class ProductsPage(QWidget):
         return wrapper
 
     def _create_table_card(self) -> QWidget:
+        """Erstellt die Tabellenkarte der Produktansicht."""
         card = QFrame()
         card.setObjectName("dashboardBottomCard")
 
@@ -558,94 +591,44 @@ class ProductsPage(QWidget):
 
         return card
 
+    def _map_product_to_dict(self, product: Any) -> dict[str, Any]:
+        """Wandelt ein Produktobjekt in ein Dictionary um."""
+        return {
+            "id": getattr(product, "id", "") or "",
+            "name": getattr(product, "name", "") or "",
+            "description": getattr(product, "description", "") or "",
+            "price": getattr(product, "price", 0.0) or 0.0,
+            "quantity": getattr(product, "quantity", 0) or 0,
+            "sku": getattr(product, "sku", "") or "",
+            "category": getattr(product, "category", "") or "",
+            "notes": getattr(product, "notes", "") or "",
+        }
+
     def refresh_data(self) -> None:
-        if self.controller is not None:
-            try:
+        """Lädt Produktdaten neu und aktualisiert die Ansicht."""
+        try:
+            if self.controller is not None:
                 products = self.controller.get_all_products()
-                self._all_products = list(products)
-                self._apply_filters()
-                return
-            except Exception:
-                pass
+                self._all_products = [
+                    self._map_product_to_dict(product) for product in products
+                ]
+            else:
+                self._all_products = []
 
-        self._all_products = self._get_demo_products()
-        self._apply_filters()
-
-    def _get_demo_products(self) -> list[dict[str, Any]]:
-        return [
-            {
-                "id": "PROD-001",
-                "name": "Whey Protein Vanilla",
-                "description": "Proteinpulver 1kg",
-                "price": 34.90,
-                "quantity": 28,
-                "sku": "WP-1001",
-                "category": "Supplements",
-                "notes": "Bestseller",
-            },
-            {
-                "id": "PROD-002",
-                "name": "Pre-Workout Booster",
-                "description": "Energie vor dem Training",
-                "price": 24.50,
-                "quantity": 7,
-                "sku": "PWB-210",
-                "category": "Supplements",
-                "notes": "Niedriger Bestand",
-            },
-            {
-                "id": "PROD-003",
-                "name": "Isotonic Drink",
-                "description": "0,5L Getränk",
-                "price": 2.99,
-                "quantity": 0,
-                "sku": "ISO-500",
-                "category": "Getränke",
-                "notes": "Leer",
-            },
-            {
-                "id": "PROD-004",
-                "name": "Gym Towel",
-                "description": "Handtuch schwarz",
-                "price": 12.00,
-                "quantity": 18,
-                "sku": "GT-001",
-                "category": "Merchandise",
-                "notes": "",
-            },
-            {
-                "id": "PROD-005",
-                "name": "Protein Bar",
-                "description": "Snack Riegel",
-                "price": 2.49,
-                "quantity": 54,
-                "sku": "PB-890",
-                "category": "Snacks",
-                "notes": "",
-            },
-            {
-                "id": "PROD-006",
-                "name": "Shaker Bottle",
-                "description": "600ml Shaker",
-                "price": 7.90,
-                "quantity": 14,
-                "sku": "SHK-600",
-                "category": "Merchandise",
-                "notes": "",
-            },
-            {
-                "id": "PROD-007",
-                "name": "Disinfectant Spray",
-                "description": "Flächendesinfektion",
-                "price": 5.20,
-                "quantity": 6,
-                "sku": "HYG-101",
-                "category": "Hygiene",
-                "notes": "Nachbestellen",
-            },
-        ]
+            self._apply_filters()
+        except Exception as error:
+            QMessageBox.critical(
+                self,
+                "Fehler",
+                f"Produkte konnten nicht geladen werden:\n{error}",
+            )
+            self._all_products = []
+            self._filtered_products = []
+            self._populate_table([])
+            self._update_stats([])
 
     def _apply_filters(self) -> None:
+        """Filtert Produkte nach Suche, Kategorie und Bestandsstatus."""
         search_text = self.search_input.text().strip().lower()
         category = self.category_filter.currentText()
         stock_mode = self.stock_filter.currentText()
@@ -660,6 +643,7 @@ class ProductsPage(QWidget):
                     str(product.get("description", "")),
                     str(product.get("sku", "")),
                     str(product.get("category", "")),
+                    str(product.get("notes", "")),
                 ]
             ).lower()
 
@@ -685,8 +669,10 @@ class ProductsPage(QWidget):
         self._update_stats(filtered_products)
 
     def _populate_table(self, products: list[dict[str, Any]]) -> None:
+        """Füllt die Tabelle mit den gefilterten Produkten."""
         self.products_table.setSortingEnabled(False)
         self.products_table.setRowCount(len(products))
+        self.products_table.clearContents()
 
         for row, product in enumerate(products):
             values = [
@@ -720,11 +706,13 @@ class ProductsPage(QWidget):
             self.products_table.selectRow(0)
 
     def _update_stats(self, products: list[dict[str, Any]]) -> None:
+        """Aktualisiert die Kennzahlenkarten."""
         total_products = len(products)
-        total_stock = sum(int(p.get("quantity", 0)) for p in products)
-        low_stock = sum(1 for p in products if int(p.get("quantity", 0)) < 10)
+        total_stock = sum(int(product.get("quantity", 0)) for product in products)
+        low_stock = sum(1 for product in products if 0 < int(product.get("quantity", 0)) < 10)
         total_value = sum(
-            float(p.get("price", 0)) * int(p.get("quantity", 0)) for p in products
+            float(product.get("price", 0)) * int(product.get("quantity", 0))
+            for product in products
         )
 
         self.total_products_card.set_value_animated(total_products)
@@ -733,6 +721,7 @@ class ProductsPage(QWidget):
         self.value_card.set_value(f"{total_value:.2f} €")
 
     def _get_selected_product(self) -> dict[str, Any] | None:
+        """Gibt das aktuell ausgewählte Produkt zurück."""
         row = self.products_table.currentRow()
         if row < 0:
             return None
@@ -749,43 +738,110 @@ class ProductsPage(QWidget):
         return None
 
     def open_table_dialog(self) -> None:
+        """Öffnet die vergrößerte Tabellenansicht."""
         dialog = ProductsTableDialog(self, self._filtered_products)
         dialog.exec()
 
+    def _create_product_via_controller(self, data: dict[str, Any]) -> None:
+        """Erstellt ein Produkt über den Controller."""
+        if self.controller is None:
+            raise ValueError("Kein Controller vorhanden.")
+
+        self.controller.create_product(
+            product_id=data["id"],
+            name=data["name"],
+            description=data["description"],
+            price=data["price"],
+            initial_quantity=data["quantity"],
+            sku=data["sku"],
+            category=data["category"],
+            notes=data["notes"],
+        )
+
+    def _update_product_via_controller(
+        self,
+        product_id: str,
+        updated: dict[str, Any],
+    ) -> None:
+        """Aktualisiert ein Produkt über den Controller."""
+        if self.controller is None:
+            raise ValueError("Kein Controller vorhanden.")
+
+        self.controller.update_product(
+            product_id=product_id,
+            name=updated["name"],
+            description=updated["description"],
+            price=updated["price"],
+            sku=updated["sku"],
+            category=updated["category"],
+            notes=updated["notes"],
+        )
+
+    def _delete_product_via_controller(self, product_id: str) -> None:
+        """Löscht ein Produkt über den Controller."""
+        if self.controller is None:
+            raise ValueError("Kein Controller vorhanden.")
+
+        if not hasattr(self.controller, "delete_product"):
+            raise AttributeError(
+                "Dein Controller hat keine Methode 'delete_product(product_id)'."
+            )
+
+        self.controller.delete_product(product_id)
+
     def _open_add_dialog(self) -> None:
+        """Öffnet den Dialog zum Hinzufügen eines Produkts."""
         dialog = ProductDialog(self)
-        if dialog.exec():
-            data = dialog.get_data()
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
 
-            if any(p.get("id") == data["id"] for p in self._all_products):
-                QMessageBox.warning(
-                    self,
-                    "Doppelte Produkt-ID",
-                    "Diese Produkt-ID existiert bereits.",
-                )
-                return
+        data = dialog.get_data()
 
-            self._all_products.append(data)
-            self._apply_filters()
+        try:
+            self._create_product_via_controller(data)
+            self.refresh_data()
+            QMessageBox.information(
+                self,
+                "Erfolg",
+                f"Produkt '{data['name']}' wurde erfolgreich erstellt.",
+            )
+        except Exception as error:
+            QMessageBox.critical(
+                self,
+                "Fehler",
+                f"Produkt konnte nicht erstellt werden:\n{error}",
+            )
 
     def _open_edit_dialog(self) -> None:
+        """Öffnet den Dialog zum Bearbeiten eines Produkts."""
         product = self._get_selected_product()
         if not product:
             QMessageBox.warning(self, "Fehler", "Bitte ein Produkt auswählen.")
             return
 
         dialog = ProductDialog(self, product)
-        if dialog.exec():
-            updated = dialog.get_data()
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
 
-            for index, existing_product in enumerate(self._all_products):
-                if existing_product.get("id") == product.get("id"):
-                    self._all_products[index] = updated
-                    break
+        updated = dialog.get_data()
 
-            self._apply_filters()
+        try:
+            self._update_product_via_controller(str(product["id"]), updated)
+            self.refresh_data()
+            QMessageBox.information(
+                self,
+                "Erfolg",
+                f"Produkt '{updated['name']}' wurde erfolgreich aktualisiert.",
+            )
+        except Exception as error:
+            QMessageBox.critical(
+                self,
+                "Fehler",
+                f"Produkt konnte nicht aktualisiert werden:\n{error}",
+            )
 
     def _open_stock_dialog(self) -> None:
+        """Öffnet den Dialog zur Bestandsänderung."""
         product = self._get_selected_product()
         if not product:
             QMessageBox.warning(self, "Fehler", "Bitte ein Produkt auswählen.")
@@ -798,21 +854,46 @@ class ProductsPage(QWidget):
             current_quantity=int(product["quantity"]),
         )
 
-        if dialog.exec():
-            result = dialog.get_data()
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
 
-            for existing_product in self._all_products:
-                if existing_product.get("id") == product.get("id"):
-                    existing_product["quantity"] = result["new_quantity"]
-                    note = result["reason"]
-                    existing_product["notes"] = (
-                        f"{existing_product.get('notes', '')} | {note}".strip(" |")
-                    )
-                    break
+        result = dialog.get_data()
 
-            self._apply_filters()
+        try:
+            if self.controller is None:
+                QMessageBox.warning(self, "Fehler", "Kein Controller vorhanden.")
+                return
+
+            if result["mode"] == "Wareneingang":
+                self.controller.add_stock(
+                    product["id"],
+                    result["amount"],
+                    result["reason"],
+                    "ui",
+                )
+            else:
+                self.controller.remove_stock(
+                    product["id"],
+                    result["amount"],
+                    result["reason"],
+                    "ui",
+                )
+
+            self.refresh_data()
+            QMessageBox.information(
+                self,
+                "Erfolg",
+                f"Der Bestand von '{product['name']}' wurde erfolgreich geändert.",
+            )
+        except Exception as error:
+            QMessageBox.critical(
+                self,
+                "Fehler",
+                f"Bestand konnte nicht geändert werden:\n{error}",
+            )
 
     def _delete_product(self) -> None:
+        """Löscht das ausgewählte Produkt."""
         product = self._get_selected_product()
         if not product:
             QMessageBox.warning(self, "Fehler", "Bitte ein Produkt auswählen.")
@@ -821,13 +902,28 @@ class ProductsPage(QWidget):
         answer = QMessageBox.question(
             self,
             "Produkt löschen",
-            f"Möchtest du das Produkt '{product.get('name', '')}' wirklich löschen?",
+            (
+                f"Möchtest du das Produkt '{product.get('name', '')}' "
+                f"mit der ID '{product.get('id', '')}' wirklich löschen?"
+            ),
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No,
         )
 
-        if answer == QMessageBox.StandardButton.Yes:
-            self._all_products = [
-                p for p in self._all_products if p.get("id") != product.get("id")
-            ]
-            self._apply_filters()
+        if answer != QMessageBox.StandardButton.Yes:
+            return
+
+        try:
+            self._delete_product_via_controller(str(product["id"]))
+            self.refresh_data()
+            QMessageBox.information(
+                self,
+                "Erfolg",
+                f"Produkt '{product.get('name', '')}' wurde gelöscht.",
+            )
+        except Exception as error:
+            QMessageBox.critical(
+                self,
+                "Fehler",
+                f"Produkt konnte nicht gelöscht werden:\n{error}",
+            )

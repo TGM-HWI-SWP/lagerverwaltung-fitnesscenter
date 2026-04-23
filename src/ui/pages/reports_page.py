@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QColor
+from PyQt6.QtGui import QColor, QMouseEvent
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QComboBox,
@@ -21,11 +21,13 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ui.widgets.stat_card import StatCard
+from src.ui.widgets.stat_card import StatCard
 
 
 @dataclass
 class ReportRecord:
+    """Speichert die aufbereiteten Daten eines Reports."""
+
     report_id: str
     title: str
     category: str
@@ -39,12 +41,14 @@ class ReportRecord:
 
 
 class ReportHighlightCard(QFrame):
-    """Große klickbare Report-Kachel."""
+    """Große klickbare Kachel für einen Report."""
 
     clicked = pyqtSignal(str)
 
     def __init__(self, report: ReportRecord, parent: QWidget | None = None) -> None:
+        """Initialisiert die Report-Kachel."""
         super().__init__(parent)
+
         self.report = report
         self._selected = False
 
@@ -57,6 +61,7 @@ class ReportHighlightCard(QFrame):
         self._refresh_style()
 
     def _create_ui(self) -> None:
+        """Erstellt die Inhalte der Report-Kachel."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(18, 18, 18, 18)
         layout.setSpacing(10)
@@ -108,6 +113,7 @@ class ReportHighlightCard(QFrame):
         layout.addLayout(bottom_row)
 
     def _apply_priority_style(self) -> None:
+        """Setzt den Stil für die Priorität."""
         if self.report.priority == "Hoch":
             self.priority_label.setProperty("priorityLevel", "high")
         elif self.report.priority == "Mittel":
@@ -116,6 +122,7 @@ class ReportHighlightCard(QFrame):
             self.priority_label.setProperty("priorityLevel", "low")
 
     def _apply_status_style(self, label: QLabel, status: str) -> None:
+        """Setzt den Stil für den Report-Status."""
         if status == "Fertig":
             label.setObjectName("dashboardStatusOk")
         elif status == "In Arbeit":
@@ -124,23 +131,26 @@ class ReportHighlightCard(QFrame):
             label.setObjectName("dashboardStatusCritical")
 
     def set_selected(self, selected: bool) -> None:
+        """Markiert die Kachel als ausgewählt oder nicht ausgewählt."""
         self._selected = selected
         self.setProperty("selectedReportCard", selected)
         self._refresh_style()
 
     def _refresh_style(self) -> None:
+        """Aktualisiert den Stil der Kachel."""
         self.style().unpolish(self)
         self.style().polish(self)
         self.update()
 
-    def mouseReleaseEvent(self, event) -> None:
+    def mouseReleaseEvent(self, event: QMouseEvent) -> None:
+        """Sendet das Klicksignal bei linker Maustaste."""
         if event.button() == Qt.MouseButton.LeftButton:
             self.clicked.emit(self.report.report_id)
         super().mouseReleaseEvent(event)
 
 
 class ReportsPage(QWidget):
-    """Management-Reportcenter mit Executive Summary, Highlight-Kacheln und Archiv."""
+    """Report-Center mit Filterung, Highlight-Kacheln und Detailansicht."""
 
     TABLE_COLUMNS = [
         "Report-ID",
@@ -155,7 +165,9 @@ class ReportsPage(QWidget):
     ]
 
     def __init__(self, controller: Any | None = None) -> None:
+        """Initialisiert die Report-Seite."""
         super().__init__()
+
         self.controller = controller
         self.reports: list[ReportRecord] = []
         self.filtered_reports: list[ReportRecord] = []
@@ -163,13 +175,10 @@ class ReportsPage(QWidget):
         self.selected_report_id: str | None = None
 
         self._create_ui()
-        self._load_demo_data()
         self.refresh_data()
 
-    # =========================
-    # UI
-    # =========================
     def _create_ui(self) -> None:
+        """Erstellt die komplette Oberfläche der Seite."""
         root_layout = QVBoxLayout(self)
         root_layout.setContentsMargins(0, 0, 0, 0)
         root_layout.setSpacing(0)
@@ -203,6 +212,7 @@ class ReportsPage(QWidget):
         root_layout.addWidget(self.page_scroll)
 
     def _create_executive_summary(self) -> QWidget:
+        """Erstellt den oberen Übersichtsbereich mit Kennzahlen."""
         card = QFrame()
         card.setObjectName("reportsHeroCard")
 
@@ -214,7 +224,7 @@ class ReportsPage(QWidget):
         title.setObjectName("reportsHeroTitle")
 
         subtitle = QLabel(
-            "Analysecenter für Management-Reports, operative Auswertungen und Prioritätenübersicht."
+            "Analysecenter für Management-Reports und aktuell verfügbare Auswertungen."
         )
         subtitle.setObjectName("reportsHeroSubtitle")
         subtitle.setWordWrap(True)
@@ -267,6 +277,7 @@ class ReportsPage(QWidget):
         return card
 
     def _create_toolbar(self) -> QWidget:
+        """Erstellt Suchfeld, Filter und Aktualisierungsbutton."""
         card = QFrame()
         card.setObjectName("dashboardBottomCard")
 
@@ -277,14 +288,16 @@ class ReportsPage(QWidget):
         title = QLabel("Report-Steuerung")
         title.setObjectName("dashboardSectionTitle")
 
-        subtitle = QLabel("Reports filtern, durchsuchen und priorisieren.")
+        subtitle = QLabel("Reports filtern, durchsuchen und neu laden.")
         subtitle.setObjectName("dashboardSectionSubtitle")
 
         controls = QHBoxLayout()
         controls.setSpacing(12)
 
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("Suche nach Titel, Kategorie, Report-ID oder Ersteller ...")
+        self.search_input.setPlaceholderText(
+            "Suche nach Titel, Kategorie, Report-ID oder Ersteller ..."
+        )
         self.search_input.textChanged.connect(self.apply_filters)
 
         self.status_filter = QComboBox()
@@ -318,6 +331,7 @@ class ReportsPage(QWidget):
         return card
 
     def _create_highlight_area(self) -> QWidget:
+        """Erstellt den Bereich mit den Highlight-Kacheln."""
         container = QFrame()
         container.setObjectName("dashboardBottomCard")
         container.setMinimumHeight(620)
@@ -329,7 +343,7 @@ class ReportsPage(QWidget):
         title = QLabel("Highlight Reports")
         title.setObjectName("dashboardSectionTitle")
 
-        subtitle = QLabel("Wichtige Reports als Management-Kacheln.")
+        subtitle = QLabel("Verfügbare Reports als Management-Kacheln.")
         subtitle.setObjectName("dashboardSectionSubtitle")
 
         self.highlight_scroll = QScrollArea()
@@ -352,6 +366,7 @@ class ReportsPage(QWidget):
         return container
 
     def _create_insight_panel(self) -> QWidget:
+        """Erstellt den Detail- und Insight-Bereich."""
         container = QFrame()
         container.setObjectName("dashboardBottomCard")
         container.setMinimumHeight(620)
@@ -434,6 +449,7 @@ class ReportsPage(QWidget):
         return container
 
     def _create_archive_table(self) -> QWidget:
+        """Erstellt die tabellarische Archivansicht."""
         card = QFrame()
         card.setObjectName("dashboardBottomCard")
         card.setMinimumHeight(380)
@@ -468,104 +484,58 @@ class ReportsPage(QWidget):
         return card
 
     def _build_detail_label(self, title: str, value: str) -> QLabel:
+        """Erstellt ein Detail-Label für den rechten Bereich."""
         label = QLabel(f"<b>{title}:</b><br>{value}")
         label.setObjectName("dashboardActivityItem")
         label.setWordWrap(True)
         return label
 
-    # =========================
-    # DATA
-    # =========================
-    def _load_demo_data(self) -> None:
-        self.reports = [
-            ReportRecord(
-                "REP-5001",
-                "Lagerwert und Bestandsentwicklung Q1",
-                "Lager",
-                "Q1 2026",
-                "Fertig",
-                "Hoch",
-                "Nikola",
-                "15.04.2026",
-                "Der Lagerwert ist gestiegen, gleichzeitig häufen sich kritische Restbestände bei Supplements.",
-                "Exportiert",
-            ),
-            ReportRecord(
-                "REP-5002",
-                "Mitgliederwachstum und Kündigungsquote",
-                "Mitglieder",
-                "März 2026",
-                "In Arbeit",
-                "Hoch",
-                "Laura Hofer",
-                "14.04.2026",
-                "Die Mitgliederzahlen steigen moderat, die Kündigungsquote ist im Premium-Bereich auffällig.",
-                "Offen",
-            ),
-            ReportRecord(
-                "REP-5003",
-                "Gerätewartung und Ausfallzeiten",
-                "Geräte",
-                "April 2026",
-                "In Arbeit",
-                "Mittel",
-                "Vanessa Moser",
-                "13.04.2026",
-                "Mehrere Kraftgeräte benötigen Wartung, besonders im Freihantelbereich ist die Verfügbarkeit reduziert.",
-                "Offen",
-            ),
-            ReportRecord(
-                "REP-5004",
-                "Umsatzanalyse Vending Machines",
-                "Automaten",
-                "Q1 2026",
-                "Fertig",
-                "Mittel",
-                "Julian Kern",
-                "11.04.2026",
-                "Getränke verkaufen sich stabil, Snacks und Supplements im Lounge-Automaten wachsen überdurchschnittlich.",
-                "Exportiert",
-            ),
-            ReportRecord(
-                "REP-5005",
-                "Mitarbeiterauslastung und Rollenverteilung",
-                "Mitglieder",
-                "April 2026",
-                "Geplant",
-                "Niedrig",
-                "Markus Steiner",
-                "10.04.2026",
-                "Die nächste Auswertung soll auf Schichtverteilung, Rollenkonflikte und Engpasszeiten eingehen.",
-                "Nicht exportiert",
-            ),
-            ReportRecord(
-                "REP-5006",
-                "Finanzreport operative Kennzahlen",
-                "Finanzen",
-                "März 2026",
-                "Fertig",
-                "Hoch",
-                "Nikola",
-                "09.04.2026",
-                "Umsatz und Deckungsbeitrag entwickeln sich stabil, aber Kosten in Teilbereichen steigen schneller als erwartet.",
-                "Exportiert",
-            ),
-        ]
+    def _build_inventory_report_record(self, report_data: Any) -> ReportRecord:
+        """Wandelt den Inventory Report in ein ReportRecord um."""
+        if isinstance(report_data, dict):
+            summary = str(
+                report_data.get("summary")
+                or report_data.get("description")
+                or report_data.get("result")
+                or report_data.get("report")
+                or report_data
+            )
+            period = str(report_data.get("period", "Aktuell"))
+            last_update = str(report_data.get("last_update", "Aktuell"))
+        else:
+            summary = str(report_data)
+            period = "Aktuell"
+            last_update = "Aktuell"
+
+        return ReportRecord(
+            report_id="REP-INVENTORY-001",
+            title="Inventory Report",
+            category="Lager",
+            period=period,
+            status="Fertig",
+            priority="Hoch",
+            created_by="System",
+            last_update=last_update,
+            summary=summary,
+            export_state="Nicht exportiert",
+        )
 
     def refresh_data(self) -> None:
-        if self.controller is not None:
-            try:
-                reports = self.controller.get_all_reports()
-                self.reports = list(reports)
-            except Exception:
-                pass
+        """Lädt die verfügbaren Reports neu."""
+        try:
+            if self.controller is not None:
+                report_data = self.controller.generate_inventory_report()
+                self.reports = [self._build_inventory_report_record(report_data)]
+            else:
+                self.reports = []
 
-        self.apply_filters()
+            self.apply_filters()
+        except Exception:
+            self.reports = []
+            self.apply_filters()
 
-    # =========================
-    # FILTER
-    # =========================
     def apply_filters(self) -> None:
+        """Filtert Reports nach Suche, Status, Priorität und Kategorie."""
         search_text = self.search_input.text().strip().lower()
         selected_status = self.status_filter.currentText()
         selected_priority = self.priority_filter.currentText()
@@ -586,8 +556,12 @@ class ReportsPage(QWidget):
 
             matches_search = search_text in searchable
             matches_status = selected_status == "Alle Status" or report.status == selected_status
-            matches_priority = selected_priority == "Alle Prioritäten" or report.priority == selected_priority
-            matches_category = selected_category == "Alle Kategorien" or report.category == selected_category
+            matches_priority = (
+                selected_priority == "Alle Prioritäten" or report.priority == selected_priority
+            )
+            matches_category = (
+                selected_category == "Alle Kategorien" or report.category == selected_category
+            )
 
             if matches_search and matches_status and matches_priority and matches_category:
                 result.append(report)
@@ -606,10 +580,8 @@ class ReportsPage(QWidget):
         else:
             self._clear_detail_panel()
 
-    # =========================
-    # HIGHLIGHTS + TABLE
-    # =========================
     def _rebuild_highlight_cards(self) -> None:
+        """Erstellt die Highlight-Kacheln der gefilterten Reports neu."""
         while self.highlight_grid.count():
             item = self.highlight_grid.takeAt(0)
             widget = item.widget()
@@ -630,9 +602,34 @@ class ReportsPage(QWidget):
         self.highlight_grid.setColumnStretch(0, 1)
         self.highlight_grid.setColumnStretch(1, 1)
 
+    def _apply_table_item_color(
+        self,
+        item: QTableWidgetItem,
+        column: int,
+        report: ReportRecord,
+    ) -> None:
+        """Setzt passende Farben für Status und Priorität."""
+        if column == 4:
+            if report.status == "Fertig":
+                item.setForeground(QColor("#8df0c4"))
+            elif report.status == "In Arbeit":
+                item.setForeground(QColor("#ffbb72"))
+            else:
+                item.setForeground(QColor("#ff8aa5"))
+
+        if column == 5:
+            if report.priority == "Hoch":
+                item.setForeground(QColor("#ff8aa5"))
+            elif report.priority == "Mittel":
+                item.setForeground(QColor("#ffbb72"))
+            else:
+                item.setForeground(QColor("#8df0c4"))
+
     def _populate_table(self) -> None:
+        """Füllt die Archivtabelle mit den gefilterten Reports."""
         self.report_table.setSortingEnabled(False)
         self.report_table.setRowCount(len(self.filtered_reports))
+        self.report_table.clearContents()
 
         for row, report in enumerate(self.filtered_reports):
             values = [
@@ -650,23 +647,7 @@ class ReportsPage(QWidget):
             for col, value in enumerate(values):
                 item = QTableWidgetItem(str(value))
                 item.setTextAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-
-                if col == 4:
-                    if report.status == "Fertig":
-                        item.setForeground(QColor("#8df0c4"))
-                    elif report.status == "In Arbeit":
-                        item.setForeground(QColor("#ffbb72"))
-                    else:
-                        item.setForeground(QColor("#ff8aa5"))
-
-                if col == 5:
-                    if report.priority == "Hoch":
-                        item.setForeground(QColor("#ff8aa5"))
-                    elif report.priority == "Mittel":
-                        item.setForeground(QColor("#ffbb72"))
-                    else:
-                        item.setForeground(QColor("#8df0c4"))
-
+                self._apply_table_item_color(item, col, report)
                 self.report_table.setItem(row, col, item)
 
         self.report_table.resizeColumnsToContents()
@@ -676,6 +657,7 @@ class ReportsPage(QWidget):
             self.report_table.selectRow(0)
 
     def _select_from_table(self) -> None:
+        """Übernimmt die Auswahl aus der Tabelle in die Detailansicht."""
         row = self.report_table.currentRow()
         if row < 0:
             return
@@ -686,10 +668,8 @@ class ReportsPage(QWidget):
 
         self.select_report(report_id_item.text())
 
-    # =========================
-    # DETAILS
-    # =========================
     def select_report(self, report_id: str) -> None:
+        """Wählt einen Report aus und aktualisiert die Detailansicht."""
         self.selected_report_id = report_id
         report = self._find_report(report_id)
 
@@ -740,6 +720,7 @@ class ReportsPage(QWidget):
             card.set_selected(current_id == report_id)
 
     def _clear_detail_panel(self) -> None:
+        """Setzt die Detailansicht auf den Standardzustand zurück."""
         self.selected_title.setText("Kein Report ausgewählt")
         self.selected_status.setText("● -")
         self.selected_status.setObjectName("dashboardSectionSubtitle")
@@ -762,19 +743,22 @@ class ReportsPage(QWidget):
         self.ampel_label.style().unpolish(self.ampel_label)
         self.ampel_label.style().polish(self.ampel_label)
 
+        for card in self.report_cards.values():
+            card.set_selected(False)
+
     def _find_report(self, report_id: str | None) -> ReportRecord | None:
+        """Sucht einen Report anhand seiner ID."""
         if report_id is None:
             return None
 
         for report in self.filtered_reports:
             if report.report_id == report_id:
                 return report
+
         return None
 
-    # =========================
-    # STATS
-    # =========================
     def _update_stats(self) -> None:
+        """Aktualisiert die Kennzahlenkarten."""
         total = len(self.filtered_reports)
         finished = sum(1 for report in self.filtered_reports if report.status == "Fertig")
         in_progress = sum(1 for report in self.filtered_reports if report.status == "In Arbeit")

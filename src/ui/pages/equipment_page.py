@@ -4,11 +4,12 @@ from dataclasses import dataclass
 from typing import Any
 
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QColor
+from PyQt6.QtGui import QColor, QMouseEvent
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QComboBox,
     QDialog,
+    QFormLayout,
     QFrame,
     QGridLayout,
     QHBoxLayout,
@@ -23,11 +24,13 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ui.widgets.stat_card import StatCard
+from src.ui.widgets.stat_card import StatCard
 
 
 @dataclass
 class EquipmentRecord:
+    """Speichert die aufbereiteten Daten eines Geräts."""
+
     equipment_id: str
     name: str
     equipment_type: str
@@ -38,13 +41,211 @@ class EquipmentRecord:
     note: str
 
 
+class EquipmentDialog(QDialog):
+    """Dialog zum Anlegen eines neuen Geräts."""
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        """Initialisiert den Geräte-Dialog."""
+        super().__init__(parent)
+
+        self.setWindowTitle("Gerät hinzufügen")
+        self.setModal(True)
+        self.setMinimumWidth(520)
+
+        self._create_ui()
+
+    def _create_ui(self) -> None:
+        """Erstellt die Oberfläche des Dialogs."""
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(24, 24, 24, 24)
+        layout.setSpacing(16)
+
+        title = QLabel("Neues Gerät anlegen")
+        title.setObjectName("dashboardSectionTitle")
+
+        subtitle = QLabel("Gerätedaten erfassen und speichern.")
+        subtitle.setObjectName("dashboardSectionSubtitle")
+        subtitle.setWordWrap(True)
+
+        form_card = QFrame()
+        form_card.setObjectName("dashboardBottomCard")
+
+        form = QFormLayout(form_card)
+        form.setContentsMargins(18, 18, 18, 18)
+        form.setSpacing(14)
+
+        self.id_input = QLineEdit()
+        self.id_input.setPlaceholderText("z. B. EQ-3010")
+
+        self.name_input = QLineEdit()
+        self.name_input.setPlaceholderText("z. B. Bike Pro X")
+
+        self.type_input = QLineEdit()
+        self.type_input.setPlaceholderText("z. B. Cardio")
+
+        self.location_input = QComboBox()
+        self.location_input.addItems(
+            ["Cardio", "Kraft", "Freihantel", "Eingang", "Kursraum"]
+        )
+
+        self.status_input = QComboBox()
+        self.status_input.addItems(["Aktiv", "Wartung", "Defekt", "Reserviert"])
+
+        self.employee_input = QLineEdit()
+        self.employee_input.setPlaceholderText("Mitarbeiter-ID oder leer")
+
+        form.addRow("Geräte-ID:", self.id_input)
+        form.addRow("Name:", self.name_input)
+        form.addRow("Typ:", self.type_input)
+        form.addRow("Bereich:", self.location_input)
+        form.addRow("Status:", self.status_input)
+        form.addRow("Mitarbeiter-ID:", self.employee_input)
+
+        button_row = QHBoxLayout()
+        button_row.addStretch()
+
+        cancel_button = QPushButton("Abbrechen")
+        cancel_button.setObjectName("secondaryButton")
+        cancel_button.clicked.connect(self.reject)
+
+        save_button = QPushButton("Speichern")
+        save_button.setObjectName("primaryButton")
+        save_button.clicked.connect(self._validate_and_accept)
+
+        button_row.addWidget(cancel_button)
+        button_row.addWidget(save_button)
+
+        layout.addWidget(title)
+        layout.addWidget(subtitle)
+        layout.addWidget(form_card)
+        layout.addLayout(button_row)
+
+    def _validate_and_accept(self) -> None:
+        """Prüft die Eingaben und bestätigt den Dialog."""
+        if not self.id_input.text().strip():
+            QMessageBox.warning(self, "Fehlende Eingabe", "Bitte eine Geräte-ID eingeben.")
+            return
+
+        if not self.name_input.text().strip():
+            QMessageBox.warning(self, "Fehlende Eingabe", "Bitte einen Gerätenamen eingeben.")
+            return
+
+        if not self.type_input.text().strip():
+            QMessageBox.warning(self, "Fehlende Eingabe", "Bitte einen Gerätetyp eingeben.")
+            return
+
+        self.accept()
+
+    def get_data(self) -> dict[str, str]:
+        """Gibt die eingegebenen Gerätedaten zurück."""
+        status_map = {
+            "Aktiv": "available",
+            "Wartung": "maintenance",
+            "Defekt": "defect",
+            "Reserviert": "reserved",
+        }
+
+        return {
+            "equipment_id": self.id_input.text().strip(),
+            "name": self.name_input.text().strip(),
+            "equipment_type": self.type_input.text().strip(),
+            "location": self.location_input.currentText(),
+            "status": status_map.get(self.status_input.currentText(), "available"),
+            "assigned_employee_id": self.employee_input.text().strip(),
+        }
+
+
+class AssignEmployeeDialog(QDialog):
+    """Dialog zum Zuweisen eines Mitarbeiters."""
+
+    def __init__(
+        self,
+        parent: QWidget | None = None,
+        equipment_name: str = "",
+        current_employee: str = "",
+    ) -> None:
+        """Initialisiert den Zuweisungsdialog."""
+        super().__init__(parent)
+
+        self.setWindowTitle("Mitarbeiter zuweisen")
+        self.setModal(True)
+        self.setMinimumWidth(460)
+
+        self.equipment_name = equipment_name
+        self.current_employee = current_employee
+
+        self._create_ui()
+
+    def _create_ui(self) -> None:
+        """Erstellt die Oberfläche des Dialogs."""
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(24, 24, 24, 24)
+        layout.setSpacing(16)
+
+        title = QLabel("Mitarbeiter zuweisen")
+        title.setObjectName("dashboardSectionTitle")
+
+        subtitle = QLabel(
+            f"Gerät: {self.equipment_name}\nAktuell: {self.current_employee or '-'}"
+        )
+        subtitle.setObjectName("dashboardSectionSubtitle")
+        subtitle.setWordWrap(True)
+
+        form_card = QFrame()
+        form_card.setObjectName("dashboardBottomCard")
+
+        form = QFormLayout(form_card)
+        form.setContentsMargins(18, 18, 18, 18)
+        form.setSpacing(14)
+
+        self.employee_input = QLineEdit()
+        self.employee_input.setPlaceholderText("Mitarbeiter-ID eingeben")
+        if self.current_employee and self.current_employee != "-":
+            self.employee_input.setText(self.current_employee)
+
+        form.addRow("Mitarbeiter-ID:", self.employee_input)
+
+        button_row = QHBoxLayout()
+        button_row.addStretch()
+
+        cancel_button = QPushButton("Abbrechen")
+        cancel_button.setObjectName("secondaryButton")
+        cancel_button.clicked.connect(self.reject)
+
+        save_button = QPushButton("Zuweisen")
+        save_button.setObjectName("primaryButton")
+        save_button.clicked.connect(self._validate_and_accept)
+
+        button_row.addWidget(cancel_button)
+        button_row.addWidget(save_button)
+
+        layout.addWidget(title)
+        layout.addWidget(subtitle)
+        layout.addWidget(form_card)
+        layout.addLayout(button_row)
+
+    def _validate_and_accept(self) -> None:
+        """Prüft die Eingabe und bestätigt den Dialog."""
+        if not self.employee_input.text().strip():
+            QMessageBox.warning(self, "Fehlende Eingabe", "Bitte eine Mitarbeiter-ID eingeben.")
+            return
+
+        self.accept()
+
+    def get_employee_id(self) -> str:
+        """Gibt die eingegebene Mitarbeiter-ID zurück."""
+        return self.employee_input.text().strip()
+
+
 class EquipmentUnitCard(QFrame):
-    """Große klickbare Gerätekarte."""
+    """Große klickbare Karte für ein Gerät."""
 
     clicked = pyqtSignal(str)
 
     def __init__(self, equipment: EquipmentRecord, parent: QWidget | None = None) -> None:
+        """Initialisiert die Gerätekarte."""
         super().__init__(parent)
+
         self.equipment = equipment
 
         self.setObjectName("dashboardBottomCard")
@@ -55,6 +256,7 @@ class EquipmentUnitCard(QFrame):
         self._create_ui()
 
     def _create_ui(self) -> None:
+        """Erstellt die Inhalte der Gerätekarte."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(16, 16, 16, 16)
         layout.setSpacing(8)
@@ -106,6 +308,7 @@ class EquipmentUnitCard(QFrame):
         layout.addStretch()
 
     def _apply_status_style(self, label: QLabel, status: str) -> None:
+        """Setzt den Stil des Status-Badges."""
         if status == "Aktiv":
             label.setObjectName("dashboardStatusOk")
         elif status == "Wartung":
@@ -115,7 +318,8 @@ class EquipmentUnitCard(QFrame):
         else:
             label.setObjectName("dashboardSectionSubtitle")
 
-    def mouseReleaseEvent(self, event) -> None:
+    def mouseReleaseEvent(self, event: QMouseEvent) -> None:
+        """Sendet das Klicksignal bei linker Maustaste."""
         if event.button() == Qt.MouseButton.LeftButton:
             self.clicked.emit(self.equipment.equipment_id)
         super().mouseReleaseEvent(event)
@@ -136,7 +340,9 @@ class EquipmentTableDialog(QDialog):
     ]
 
     def __init__(self, parent: QWidget | None = None, equipments: list[EquipmentRecord] | None = None) -> None:
+        """Initialisiert den Tabellen-Dialog."""
         super().__init__(parent)
+
         self.equipments = equipments or []
 
         self.setWindowTitle("Geräteübersicht - vergrößerte Ansicht")
@@ -147,6 +353,7 @@ class EquipmentTableDialog(QDialog):
         self._populate_table()
 
     def _create_ui(self) -> None:
+        """Erstellt die Oberfläche der Tabellenansicht."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(18, 18, 18, 18)
         layout.setSpacing(12)
@@ -183,6 +390,7 @@ class EquipmentTableDialog(QDialog):
         layout.addLayout(button_row)
 
     def _populate_table(self) -> None:
+        """Füllt die Tabelle mit allen übergebenen Geräten."""
         self.table.setSortingEnabled(False)
         self.table.setRowCount(len(self.equipments))
 
@@ -219,23 +427,22 @@ class EquipmentTableDialog(QDialog):
 
 
 class EquipmentPage(QWidget):
-    """Geräte-Kontrollzentrum mit scrollbarer Geräte-Wall und scrollbarem Steuerpanel."""
+    """Seite zur Verwaltung, Überwachung und Steuerung aller Geräte."""
 
     def __init__(self, controller: Any | None = None) -> None:
+        """Initialisiert die Geräteseite."""
         super().__init__()
+
         self.controller = controller
         self.equipments: list[EquipmentRecord] = []
         self.filtered_equipments: list[EquipmentRecord] = []
         self.selected_equipment_id: str | None = None
 
         self._create_ui()
-        self._load_demo_data()
         self.refresh_data()
 
-    # =========================
-    # UI
-    # =========================
     def _create_ui(self) -> None:
+        """Erstellt die komplette Oberfläche der Seite."""
         root_layout = QVBoxLayout(self)
         root_layout.setContentsMargins(0, 0, 0, 0)
         root_layout.setSpacing(0)
@@ -267,6 +474,7 @@ class EquipmentPage(QWidget):
         root_layout.addWidget(self.page_scroll)
 
     def _create_top_control_center(self) -> QWidget:
+        """Erstellt Such-, Filter- und Statistikbereich."""
         card = QFrame()
         card.setObjectName("dashboardBottomCard")
 
@@ -287,7 +495,9 @@ class EquipmentPage(QWidget):
         top_row.setSpacing(12)
 
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("Geräte suchen nach Name, ID, Bereich oder Mitarbeiter ...")
+        self.search_input.setPlaceholderText(
+            "Geräte suchen nach Name, ID, Bereich oder Mitarbeiter ..."
+        )
         self.search_input.textChanged.connect(self.apply_filters)
 
         self.status_filter = QComboBox()
@@ -300,6 +510,10 @@ class EquipmentPage(QWidget):
         )
         self.area_filter.currentTextChanged.connect(self.apply_filters)
 
+        self.add_button = QPushButton("➕ Gerät hinzufügen")
+        self.add_button.setObjectName("primaryButton")
+        self.add_button.clicked.connect(self.create_equipment)
+
         self.expand_button = QPushButton("🔍 Alle Geräte als Tabelle")
         self.expand_button.setObjectName("secondaryButton")
         self.expand_button.clicked.connect(self.open_table_dialog)
@@ -307,6 +521,7 @@ class EquipmentPage(QWidget):
         top_row.addWidget(self.search_input, 2)
         top_row.addWidget(self.status_filter, 1)
         top_row.addWidget(self.area_filter, 1)
+        top_row.addWidget(self.add_button)
         top_row.addWidget(self.expand_button)
 
         stats_row = QGridLayout()
@@ -358,6 +573,7 @@ class EquipmentPage(QWidget):
         return card
 
     def _create_equipment_wall(self) -> QWidget:
+        """Erstellt die Kartenansicht aller gefilterten Geräte."""
         container = QFrame()
         container.setObjectName("dashboardBottomCard")
         container.setMinimumHeight(640)
@@ -393,6 +609,7 @@ class EquipmentPage(QWidget):
         return container
 
     def _create_control_panel(self) -> QWidget:
+        """Erstellt das rechte Steuerpanel für das ausgewählte Gerät."""
         outer_container = QFrame()
         outer_container.setObjectName("dashboardBottomCard")
         outer_container.setMinimumHeight(640)
@@ -414,7 +631,7 @@ class EquipmentPage(QWidget):
         title = QLabel("Geräte-Steuerpanel")
         title.setObjectName("dashboardSectionTitle")
 
-        subtitle = QLabel("Status prüfen, Wartung planen und Schnellaktionen ausführen.")
+        subtitle = QLabel("Status prüfen, Mitarbeiter zuweisen und Gerätedetails anzeigen.")
         subtitle.setObjectName("dashboardSectionSubtitle")
         subtitle.setWordWrap(True)
 
@@ -432,6 +649,47 @@ class EquipmentPage(QWidget):
         self.detail_maintenance = self._build_detail_label("Nächste Wartung", "-")
         self.detail_note = self._build_detail_label("Notiz", "-")
 
+        status_buttons_row_1 = QHBoxLayout()
+        status_buttons_row_1.setSpacing(10)
+
+        self.active_button = QPushButton("✅ Aktiv")
+        self.active_button.setObjectName("secondaryButton")
+        self.active_button.clicked.connect(lambda: self.change_selected_status("Aktiv"))
+
+        self.maintenance_button = QPushButton("🛠 Wartung")
+        self.maintenance_button.setObjectName("secondaryButton")
+        self.maintenance_button.clicked.connect(lambda: self.change_selected_status("Wartung"))
+
+        status_buttons_row_1.addWidget(self.active_button)
+        status_buttons_row_1.addWidget(self.maintenance_button)
+
+        status_buttons_row_2 = QHBoxLayout()
+        status_buttons_row_2.setSpacing(10)
+
+        self.defect_button = QPushButton("⚠ Defekt")
+        self.defect_button.setObjectName("secondaryButton")
+        self.defect_button.clicked.connect(lambda: self.change_selected_status("Defekt"))
+
+        self.reserved_button = QPushButton("📌 Reserviert")
+        self.reserved_button.setObjectName("secondaryButton")
+        self.reserved_button.clicked.connect(lambda: self.change_selected_status("Reserviert"))
+
+        status_buttons_row_2.addWidget(self.defect_button)
+        status_buttons_row_2.addWidget(self.reserved_button)
+
+        action_row = QHBoxLayout()
+        action_row.setSpacing(10)
+
+        self.assign_button = QPushButton("👤 Mitarbeiter zuweisen")
+        self.assign_button.setObjectName("secondaryButton")
+        self.assign_button.clicked.connect(self.assign_employee_to_selected)
+
+        self.delete_button = QPushButton("🗑 Gerät löschen")
+        self.delete_button.setObjectName("secondaryButton")
+        self.delete_button.clicked.connect(self.delete_selected_equipment)
+
+        action_row.addWidget(self.assign_button)
+        action_row.addWidget(self.delete_button)
 
         layout.addWidget(title)
         layout.addWidget(subtitle)
@@ -444,6 +702,10 @@ class EquipmentPage(QWidget):
         layout.addWidget(self.detail_employee)
         layout.addWidget(self.detail_maintenance)
         layout.addWidget(self.detail_note)
+        layout.addSpacing(8)
+        layout.addLayout(status_buttons_row_1)
+        layout.addLayout(status_buttons_row_2)
+        layout.addLayout(action_row)
         layout.addStretch()
 
         panel_scroll.setWidget(panel_content)
@@ -452,38 +714,80 @@ class EquipmentPage(QWidget):
         return outer_container
 
     def _build_detail_label(self, title: str, value: str) -> QLabel:
+        """Erstellt ein Detail-Label für das Steuerpanel."""
         label = QLabel(f"<b>{title}:</b><br>{value}")
         label.setObjectName("dashboardActivityItem")
         label.setWordWrap(True)
         return label
 
-    # =========================
-    # Data
-    # =========================
-    def _load_demo_data(self) -> None:
-        self.equipments = [
-            EquipmentRecord("EQ-3001", "Treadmill Alpha", "Cardio", "Cardio", "Aktiv", "Markus Steiner", "20.04.2026", "Läuft stabil"),
-            EquipmentRecord("EQ-3002", "Bike Pro X", "Cardio", "Cardio", "Wartung", "Laura Hofer", "17.04.2026", "Kette prüfen"),
-            EquipmentRecord("EQ-3003", "Leg Press Max", "Kraft", "Kraft", "Aktiv", "Daniel Fuchs", "28.04.2026", ""),
-            EquipmentRecord("EQ-3004", "Bench Station", "Kraft", "Freihantel", "Reserviert", "Julian Kern", "02.05.2026", "Für Umbau markiert"),
-            EquipmentRecord("EQ-3005", "Cable Tower Z", "Kraft", "Kraft", "Defekt", "Nina Bauer", "16.04.2026", "Seil beschädigt"),
-            EquipmentRecord("EQ-3006", "Row Machine R8", "Cardio", "Cardio", "Aktiv", "Tobias Leitner", "24.04.2026", ""),
-            EquipmentRecord("EQ-3007", "Smith Machine", "Kraft", "Freihantel", "Wartung", "Vanessa Moser", "18.04.2026", "Schrauben prüfen"),
-            EquipmentRecord("EQ-3008", "Welcome Terminal", "Service", "Eingang", "Aktiv", "Sabrina Wolf", "30.04.2026", "Check-in ok"),
-            EquipmentRecord("EQ-3009", "Step Platform Set", "Kursmaterial", "Kursraum", "Reserviert", "Laura Hofer", "10.05.2026", "Für Kursblock reserviert"),
-        ]
+    def _map_equipment_to_record(self, equipment: Any) -> EquipmentRecord:
+        """Wandelt ein Controller-Objekt in ein EquipmentRecord um."""
+        equipment_id = getattr(equipment, "equipment_id", "") or ""
+        name = getattr(equipment, "name", "") or ""
+        equipment_type = getattr(equipment, "equipment_type", "") or ""
+        location = getattr(equipment, "location", "") or ""
+        raw_status = getattr(equipment, "status", "") or ""
+        assigned_employee_id = getattr(equipment, "assigned_employee_id", "") or ""
+
+        status_map = {
+            "available": "Aktiv",
+            "active": "Aktiv",
+            "maintenance": "Wartung",
+            "defect": "Defekt",
+            "reserved": "Reserviert",
+        }
+
+        status = status_map.get(
+            str(raw_status).lower(),
+            str(raw_status) if raw_status else "-"
+        )
+
+        return EquipmentRecord(
+            equipment_id=equipment_id,
+            name=name,
+            equipment_type=equipment_type,
+            area=location,
+            status=status,
+            assigned_employee=assigned_employee_id if assigned_employee_id else "-",
+            next_maintenance="-",
+            note="",
+        )
+
+    def _get_selected_equipment(self) -> EquipmentRecord | None:
+        """Gibt das aktuell ausgewählte Gerät zurück."""
+        if self.selected_equipment_id is None:
+            return None
+
+        for equipment in self.filtered_equipments:
+            if equipment.equipment_id == self.selected_equipment_id:
+                return equipment
+
+        return None
 
     def refresh_data(self) -> None:
-        if self.controller is not None:
-            try:
-                equipments = self.controller.get_all_equipments()
-                self.equipments = list(equipments)
-            except Exception:
-                pass
+        """Lädt Gerätedaten neu und aktualisiert die Ansicht."""
+        try:
+            if self.controller is not None:
+                equipments = self.controller.get_all_equipment()
+                self.equipments = [self._map_equipment_to_record(eq) for eq in equipments]
+            else:
+                self.equipments = []
 
-        self.apply_filters()
+            self.apply_filters()
+        except Exception as error:
+            QMessageBox.critical(
+                self,
+                "Fehler",
+                f"Geräte konnten nicht geladen werden:\n{error}",
+            )
+            self.equipments = []
+            self.filtered_equipments = []
+            self._rebuild_equipment_wall()
+            self._update_stats()
+            self._clear_selected_panel()
 
     def apply_filters(self) -> None:
+        """Filtert Geräte nach Suche, Status und Bereich."""
         search_text = self.search_input.text().strip().lower()
         selected_status = self.status_filter.currentText()
         selected_area = self.area_filter.currentText()
@@ -513,7 +817,6 @@ class EquipmentPage(QWidget):
         self.filtered_equipments = result
         self._rebuild_equipment_wall()
         self._update_stats()
-        
 
         if self.filtered_equipments:
             if self.selected_equipment_id is None or not any(
@@ -525,10 +828,8 @@ class EquipmentPage(QWidget):
         else:
             self._clear_selected_panel()
 
-    # =========================
-    # Wall / Panel
-    # =========================
     def _rebuild_equipment_wall(self) -> None:
+        """Erstellt die Kartenansicht der Geräte neu."""
         while self.cards_grid.count():
             item = self.cards_grid.takeAt(0)
             widget = item.widget()
@@ -547,13 +848,9 @@ class EquipmentPage(QWidget):
         self.cards_grid.setColumnStretch(1, 1)
 
     def select_equipment(self, equipment_id: str) -> None:
+        """Wählt ein Gerät aus und aktualisiert das Steuerpanel."""
         self.selected_equipment_id = equipment_id
-
-        selected = None
-        for equipment in self.filtered_equipments:
-            if equipment.equipment_id == equipment_id:
-                selected = equipment
-                break
+        selected = self._get_selected_equipment()
 
         if selected is None:
             self._clear_selected_panel()
@@ -582,6 +879,7 @@ class EquipmentPage(QWidget):
         self.detail_note.setText(f"<b>Notiz:</b><br>{selected.note if selected.note else '-'}")
 
     def _clear_selected_panel(self) -> None:
+        """Setzt das Steuerpanel auf den Standardzustand zurück."""
         self.selected_name.setText("Kein Gerät ausgewählt")
         self.selected_status.setText("● -")
         self.selected_status.setObjectName("dashboardSectionSubtitle")
@@ -595,9 +893,8 @@ class EquipmentPage(QWidget):
         self.detail_maintenance.setText("<b>Nächste Wartung:</b><br>-")
         self.detail_note.setText("<b>Notiz:</b><br>-")
 
-
-
     def _update_stats(self) -> None:
+        """Aktualisiert die Kennzahlenkarten."""
         total = len(self.filtered_equipments)
         active = sum(1 for eq in self.filtered_equipments if eq.status == "Aktiv")
         maintenance = sum(1 for eq in self.filtered_equipments if eq.status == "Wartung")
@@ -608,31 +905,157 @@ class EquipmentPage(QWidget):
         self.maintenance_card.set_value_animated(maintenance)
         self.defect_card.set_value_animated(defect)
 
-    # =========================
-    # Actions
-    # =========================
+    def create_equipment(self) -> None:
+        """Erstellt ein neues Gerät."""
+        dialog = EquipmentDialog(self)
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+
+        data = dialog.get_data()
+
+        try:
+            if self.controller is None:
+                QMessageBox.warning(self, "Fehler", "Kein Controller vorhanden.")
+                return
+
+            self.controller.create_equipment(
+                equipment_id=data["equipment_id"],
+                name=data["name"],
+                equipment_type=data["equipment_type"],
+                location=data["location"],
+                status=data["status"],
+                assigned_employee_id=data["assigned_employee_id"],
+            )
+
+            self.refresh_data()
+            QMessageBox.information(
+                self,
+                "Erfolg",
+                f"Gerät '{data['name']}' wurde erfolgreich erstellt.",
+            )
+        except Exception as error:
+            QMessageBox.critical(
+                self,
+                "Fehler",
+                f"Gerät konnte nicht erstellt werden:\n{error}",
+            )
+
     def change_selected_status(self, new_status: str) -> None:
+        """Ändert den Status des ausgewählten Geräts."""
         if self.selected_equipment_id is None:
             QMessageBox.warning(self, "Kein Gerät", "Bitte zuerst ein Gerät auswählen.")
             return
 
-        for equipment in self.equipments:
-            if equipment.equipment_id == self.selected_equipment_id:
-                equipment.status = new_status
+        if self.controller is None:
+            QMessageBox.warning(self, "Fehler", "Kein Controller vorhanden.")
+            return
 
-                if new_status == "Wartung":
-                    equipment.note = "Zur Wartung markiert"
-                elif new_status == "Defekt":
-                    equipment.note = "Als defekt markiert"
-                elif new_status == "Aktiv":
-                    equipment.note = "Wieder einsatzbereit"
-                elif new_status == "Reserviert":
-                    equipment.note = "Für späteren Einsatz reserviert"
+        status_map = {
+            "Aktiv": "available",
+            "Wartung": "maintenance",
+            "Defekt": "defect",
+            "Reserviert": "reserved",
+        }
 
-                break
+        backend_status = status_map.get(new_status, new_status)
 
-        self.apply_filters()
+        try:
+            self.controller.update_equipment_status(self.selected_equipment_id, backend_status)
+            self.refresh_data()
+            QMessageBox.information(
+                self,
+                "Erfolg",
+                f"Status wurde auf '{new_status}' geändert.",
+            )
+        except Exception as error:
+            QMessageBox.critical(
+                self,
+                "Fehler",
+                f"Gerätestatus konnte nicht geändert werden:\n{error}",
+            )
+
+    def assign_employee_to_selected(self) -> None:
+        """Weist dem ausgewählten Gerät einen Mitarbeiter zu."""
+        selected = self._get_selected_equipment()
+        if selected is None:
+            QMessageBox.warning(self, "Kein Gerät", "Bitte zuerst ein Gerät auswählen.")
+            return
+
+        dialog = AssignEmployeeDialog(
+            self,
+            equipment_name=selected.name,
+            current_employee=selected.assigned_employee,
+        )
+
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+
+        employee_id = dialog.get_employee_id()
+
+        try:
+            if self.controller is None:
+                QMessageBox.warning(self, "Fehler", "Kein Controller vorhanden.")
+                return
+
+            self.controller.assign_employee_to_equipment(
+                self.selected_equipment_id,
+                employee_id,
+            )
+            self.refresh_data()
+            QMessageBox.information(
+                self,
+                "Erfolg",
+                f"Mitarbeiter '{employee_id}' wurde zugewiesen.",
+            )
+        except Exception as error:
+            QMessageBox.critical(
+                self,
+                "Fehler",
+                f"Mitarbeiter konnte nicht zugewiesen werden:\n{error}",
+            )
+
+    def delete_selected_equipment(self) -> None:
+        """Löscht das ausgewählte Gerät."""
+        selected = self._get_selected_equipment()
+        if selected is None:
+            QMessageBox.warning(self, "Kein Gerät", "Bitte zuerst ein Gerät auswählen.")
+            return
+
+        answer = QMessageBox.question(
+            self,
+            "Gerät löschen",
+            (
+                f"Möchtest du das Gerät '{selected.name}' "
+                f"mit der ID '{selected.equipment_id}' wirklich löschen?"
+            ),
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+
+        if answer != QMessageBox.StandardButton.Yes:
+            return
+
+        try:
+            if self.controller is None:
+                QMessageBox.warning(self, "Fehler", "Kein Controller vorhanden.")
+                return
+
+            self.controller.delete_equipment(self.selected_equipment_id)
+            self.selected_equipment_id = None
+            self.refresh_data()
+            QMessageBox.information(
+                self,
+                "Erfolg",
+                f"Gerät '{selected.name}' wurde gelöscht.",
+            )
+        except Exception as error:
+            QMessageBox.critical(
+                self,
+                "Fehler",
+                f"Gerät konnte nicht gelöscht werden:\n{error}",
+            )
 
     def open_table_dialog(self) -> None:
+        """Öffnet die große Tabellenansicht der Geräte."""
         dialog = EquipmentTableDialog(self, self.filtered_equipments)
         dialog.exec()

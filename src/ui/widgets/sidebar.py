@@ -17,17 +17,19 @@ from PyQt6.QtWidgets import (
 
 @dataclass(frozen=True)
 class SidebarEntry:
-    """Beschreibt einen Eintrag in der Sidebar."""
+    """Speichert die Daten eines Sidebar-Eintrags."""
 
     title: str
     icon: str
 
 
 class SidebarButton(QPushButton):
-    """Ein einzelner Navigationsbutton der Sidebar."""
+    """Navigationsbutton für einen Bereich der Sidebar."""
 
     def __init__(self, text: str, icon: str, index: int) -> None:
+        """Initialisiert einen Sidebar-Button."""
         super().__init__(f"{icon}  {text}")
+
         self.index = index
         self.base_text = text
         self.icon_text = icon
@@ -46,10 +48,13 @@ class Sidebar(QWidget):
     page_selected = pyqtSignal(int)
 
     def __init__(self) -> None:
+        """Initialisiert die Sidebar."""
         super().__init__()
 
         self._buttons: list[SidebarButton] = []
-        self._entries = self._build_entries()
+        self._entries: list[SidebarEntry] = self._build_entries()
+        self.button_group = QButtonGroup(self)
+        self.info_text: QLabel | None = None
 
         self.setObjectName("sidebar")
         self.setFixedWidth(300)
@@ -57,8 +62,9 @@ class Sidebar(QWidget):
         self._create_ui()
         self._connect_signals()
 
-    def _build_entries(self) -> list[SidebarEntry]:
-        """Definiert alle Sidebar-Einträge zentral."""
+    @staticmethod
+    def _build_entries() -> list[SidebarEntry]:
+        """Erstellt die zentralen Sidebar-Einträge."""
         return [
             SidebarEntry("Dashboard", "◉"),
             SidebarEntry("Mitglieder", "👥"),
@@ -71,7 +77,7 @@ class Sidebar(QWidget):
         ]
 
     def _create_ui(self) -> None:
-        """Erstellt den kompletten Aufbau der Sidebar."""
+        """Erstellt den Aufbau der Sidebar."""
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(20, 22, 20, 22)
         main_layout.setSpacing(14)
@@ -110,7 +116,7 @@ class Sidebar(QWidget):
         layout.addWidget(section_label)
 
     def _create_navigation_card(self, layout: QVBoxLayout) -> None:
-        """Erstellt die Kartenfläche mit den Navigationsbuttons."""
+        """Erstellt den Bereich mit den Navigationsbuttons."""
         nav_card = QFrame()
         nav_card.setObjectName("sidebarNavCard")
 
@@ -118,15 +124,10 @@ class Sidebar(QWidget):
         nav_layout.setContentsMargins(10, 10, 10, 10)
         nav_layout.setSpacing(8)
 
-        self.button_group = QButtonGroup(self)
         self.button_group.setExclusive(True)
 
         for index, entry in enumerate(self._entries):
-            button = SidebarButton(
-                text=entry.title,
-                icon=entry.icon,
-                index=index,
-            )
+            button = SidebarButton(entry.title, entry.icon, index)
             self.button_group.addButton(button)
             self._buttons.append(button)
             nav_layout.addWidget(button)
@@ -137,7 +138,7 @@ class Sidebar(QWidget):
         layout.addWidget(nav_card, 1)
 
     def _create_footer_card(self, layout: QVBoxLayout) -> None:
-        """Erstellt die kleine Info-Karte im unteren Bereich."""
+        """Erstellt die Statuskarte im unteren Bereich."""
         layout.addItem(
             QSpacerItem(
                 20,
@@ -176,30 +177,26 @@ class Sidebar(QWidget):
         layout.addWidget(info_card)
 
     def _connect_signals(self) -> None:
-        """Verbindet Buttons mit dem zentralen page_selected-Signal."""
+        """Verbindet alle Buttons mit dem Auswahlsignal."""
         for button in self._buttons:
-            button.clicked.connect(self._emit_page_selected)
-
-    def _emit_page_selected(self) -> None:
-        """Sendet den Index des gerade aktiven Buttons."""
-        button = self.sender()
-
-        if isinstance(button, SidebarButton):
-            self.page_selected.emit(button.index)
+            button.clicked.connect(
+                lambda checked=False, idx=button.index: self.page_selected.emit(idx)
+            )
 
     def set_active_index(self, index: int) -> None:
-        """Markiert den aktiven Navigationspunkt."""
+        """Markiert einen Button als aktiv."""
         if 0 <= index < len(self._buttons):
             self._buttons[index].setChecked(True)
 
     def set_status_text(self, text: str) -> None:
-        """Aktualisiert den Text im unteren Statusbereich."""
-        self.info_text.setText(text)
+        """Aktualisiert den unteren Statustext."""
+        if self.info_text is not None:
+            self.info_text.setText(text)
 
     def button_count(self) -> int:
-        """Gibt die Anzahl der Navigationsbuttons zurück."""
+        """Gibt die Anzahl der Buttons zurück."""
         return len(self._buttons)
 
     def button_texts(self) -> list[str]:
-        """Gibt alle sichtbaren Navigationsbezeichnungen zurück."""
+        """Gibt alle Button-Texte zurück."""
         return [button.base_text for button in self._buttons]

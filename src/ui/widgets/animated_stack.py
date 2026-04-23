@@ -6,13 +6,15 @@ from PyQt6.QtCore import (
     QParallelAnimationGroup,
     QPropertyAnimation,
 )
+from PyQt6.QtGui import QResizeEvent
 from PyQt6.QtWidgets import QGraphicsOpacityEffect, QStackedWidget, QWidget
 
 
 class AnimatedStackedWidget(QStackedWidget):
-    """QStackedWidget mit weicher Slide- und Fade-Animation zwischen Seiten."""
+    """QStackedWidget mit weicher Seitenanimation."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Initialisiert den animierten Seiten-Stack."""
         super().__init__(parent)
 
         self._is_animating = False
@@ -21,17 +23,17 @@ class AnimatedStackedWidget(QStackedWidget):
         self._queued_index: int | None = None
 
     def set_animation_duration(self, duration: int) -> None:
-        """Setzt die Dauer der Seitenanimation."""
+        """Setzt die Dauer der Animation."""
         if duration > 0:
             self._animation_duration = duration
 
     def is_animating(self) -> bool:
-        """Gibt zurück, ob gerade eine Animation läuft."""
+        """Gibt zurück, ob gerade animiert wird."""
         return self._is_animating
 
     def slide_to_index(self, index: int) -> None:
-        """Wechselt weich animiert zur gewünschten Seite."""
-        if index < 0 or index >= self.count():
+        """Wechselt animiert zu einer anderen Seite."""
+        if not 0 <= index < self.count():
             return
 
         current_index = self.currentIndex()
@@ -118,7 +120,11 @@ class AnimatedStackedWidget(QStackedWidget):
             next_opacity.setOpacity(1.0)
 
             current_widget.hide()
-            self.currentWidget().show()
+
+            active_widget = self.currentWidget()
+            if active_widget is not None:
+                active_widget.show()
+                active_widget.raise_()
 
             self._is_animating = False
             self._current_group = None
@@ -129,16 +135,16 @@ class AnimatedStackedWidget(QStackedWidget):
                 self.slide_to_index(queued_index)
 
         group.finished.connect(on_finished)
-        group.start()
         self._current_group = group
+        group.start()
 
     def _prepare_widget_for_animation(self, widget: QWidget, width: int, height: int) -> None:
-        """Bereitet ein Widget geometrisch für die Animation vor."""
+        """Bereitet ein Widget für die Animation vor."""
         widget.setGeometry(0, 0, width, height)
         widget.show()
 
     def _ensure_opacity_effect(self, widget: QWidget) -> QGraphicsOpacityEffect:
-        """Stellt sicher, dass ein Widget einen Opacity-Effekt besitzt."""
+        """Sorgt für einen Opacity-Effekt am Widget."""
         effect = widget.graphicsEffect()
 
         if isinstance(effect, QGraphicsOpacityEffect):
@@ -149,15 +155,18 @@ class AnimatedStackedWidget(QStackedWidget):
         widget.setGraphicsEffect(opacity_effect)
         return opacity_effect
 
-    def resizeEvent(self, event) -> None:
-        """Sorgt dafür, dass Seiten nach Größenänderungen sauber bleiben."""
+    def resizeEvent(self, event: QResizeEvent) -> None:
+        """Passt die Seiten an die neue Größe an."""
         super().resizeEvent(event)
+
+        if self._is_animating:
+            return
 
         width = self.frameRect().width()
         height = self.frameRect().height()
 
         for i in range(self.count()):
             widget = self.widget(i)
-            if widget is not None and not self._is_animating:
+            if widget is not None:
                 widget.setGeometry(0, 0, width, height)
                 widget.move(0, 0)

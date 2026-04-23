@@ -4,16 +4,18 @@ from dataclasses import dataclass
 from typing import Any
 
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QColor
+from PyQt6.QtGui import QColor, QMouseEvent
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QComboBox,
     QDialog,
+    QFormLayout,
     QFrame,
     QGridLayout,
     QHBoxLayout,
     QLabel,
     QLineEdit,
+    QMessageBox,
     QPushButton,
     QScrollArea,
     QTableWidget,
@@ -22,248 +24,345 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ui.widgets.stat_card import StatCard
+from src.ui.widgets.stat_card import StatCard
 
 
 @dataclass
-class VendingSlotRecord:
-    slot_code: str
-    machine_name: str
-    product_name: str
-    category: str
-    price: float
-    quantity: int
+class VendingMachineRecord:
+    """Speichert die aufbereiteten Daten eines Automaten."""
+
+    machine_id: str
+    location: str
+    machine_type: str
+    assigned_employee: str
     status: str
     note: str
 
 
-class VendingSlotCard(QFrame):
-    """Ein einzelnes Fach im Automaten."""
+class VendingMachineDialog(QDialog):
+    """Dialog zum Anlegen eines neuen Automaten."""
 
-    clicked = pyqtSignal(str, str)
-
-    def __init__(self, slot: VendingSlotRecord, parent: QWidget | None = None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
+        """Initialisiert den Automaten-Dialog."""
         super().__init__(parent)
-        self.slot = slot
+
+        self.setWindowTitle("Automat hinzufügen")
+        self.setModal(True)
+        self.setMinimumWidth(520)
+
+        self._create_ui()
+
+    def _create_ui(self) -> None:
+        """Erstellt die Oberfläche des Dialogs."""
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(24, 24, 24, 24)
+        layout.setSpacing(16)
+
+        title = QLabel("Neuen Automaten anlegen")
+        title.setObjectName("dashboardSectionTitle")
+
+        subtitle = QLabel("Standort, Typ und Mitarbeiterzuweisung erfassen.")
+        subtitle.setObjectName("dashboardSectionSubtitle")
+        subtitle.setWordWrap(True)
+
+        form_card = QFrame()
+        form_card.setObjectName("dashboardBottomCard")
+
+        form = QFormLayout(form_card)
+        form.setContentsMargins(18, 18, 18, 18)
+        form.setSpacing(14)
+
+        self.machine_id_input = QLineEdit()
+        self.machine_id_input.setPlaceholderText("z. B. VM-1004")
+
+        self.location_input = QLineEdit()
+        self.location_input.setPlaceholderText("z. B. Eingang, Lounge, Obergeschoss")
+
+        self.type_input = QComboBox()
+        self.type_input.addItems(["Snack", "Getränke", "Combo", "Sonstiges"])
+
+        self.employee_input = QLineEdit()
+        self.employee_input.setPlaceholderText("Mitarbeiter-ID optional")
+
+        form.addRow("Maschinen-ID:", self.machine_id_input)
+        form.addRow("Standort:", self.location_input)
+        form.addRow("Typ:", self.type_input)
+        form.addRow("Mitarbeiter-ID:", self.employee_input)
+
+        button_row = QHBoxLayout()
+        button_row.addStretch()
+
+        cancel_button = QPushButton("Abbrechen")
+        cancel_button.setObjectName("secondaryButton")
+        cancel_button.clicked.connect(self.reject)
+
+        save_button = QPushButton("Speichern")
+        save_button.setObjectName("primaryButton")
+        save_button.clicked.connect(self._validate_and_accept)
+
+        button_row.addWidget(cancel_button)
+        button_row.addWidget(save_button)
+
+        layout.addWidget(title)
+        layout.addWidget(subtitle)
+        layout.addWidget(form_card)
+        layout.addLayout(button_row)
+
+    def _validate_and_accept(self) -> None:
+        """Prüft die Eingaben und bestätigt den Dialog."""
+        if not self.machine_id_input.text().strip():
+            QMessageBox.warning(self, "Fehlende Eingabe", "Bitte eine Maschinen-ID eingeben.")
+            return
+
+        if not self.location_input.text().strip():
+            QMessageBox.warning(self, "Fehlende Eingabe", "Bitte einen Standort eingeben.")
+            return
+
+        self.accept()
+
+    def get_data(self) -> dict[str, str]:
+        """Gibt die eingegebenen Automatendaten zurück."""
+        return {
+            "machine_id": self.machine_id_input.text().strip(),
+            "location": self.location_input.text().strip(),
+            "machine_type": self.type_input.currentText(),
+            "assigned_employee_id": self.employee_input.text().strip(),
+        }
+
+
+class AssignMachineEmployeeDialog(QDialog):
+    """Dialog zum Zuweisen eines Mitarbeiters an einen Automaten."""
+
+    def __init__(
+        self,
+        parent: QWidget | None = None,
+        machine_name: str = "",
+        current_employee: str = "",
+    ) -> None:
+        """Initialisiert den Zuweisungsdialog."""
+        super().__init__(parent)
+
+        self.setWindowTitle("Mitarbeiter zuweisen")
+        self.setModal(True)
+        self.setMinimumWidth(460)
+
+        self.machine_name = machine_name
+        self.current_employee = current_employee
+
+        self._create_ui()
+
+    def _create_ui(self) -> None:
+        """Erstellt die Oberfläche des Dialogs."""
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(24, 24, 24, 24)
+        layout.setSpacing(16)
+
+        title = QLabel("Mitarbeiter zuweisen")
+        title.setObjectName("dashboardSectionTitle")
+
+        subtitle = QLabel(
+            f"Automat: {self.machine_name}\nAktuell: {self.current_employee or '-'}"
+        )
+        subtitle.setObjectName("dashboardSectionSubtitle")
+        subtitle.setWordWrap(True)
+
+        form_card = QFrame()
+        form_card.setObjectName("dashboardBottomCard")
+
+        form = QFormLayout(form_card)
+        form.setContentsMargins(18, 18, 18, 18)
+        form.setSpacing(14)
+
+        self.employee_input = QLineEdit()
+        self.employee_input.setPlaceholderText("Mitarbeiter-ID eingeben")
+        if self.current_employee and self.current_employee != "-":
+            self.employee_input.setText(self.current_employee)
+
+        form.addRow("Mitarbeiter-ID:", self.employee_input)
+
+        button_row = QHBoxLayout()
+        button_row.addStretch()
+
+        cancel_button = QPushButton("Abbrechen")
+        cancel_button.setObjectName("secondaryButton")
+        cancel_button.clicked.connect(self.reject)
+
+        save_button = QPushButton("Zuweisen")
+        save_button.setObjectName("primaryButton")
+        save_button.clicked.connect(self._validate_and_accept)
+
+        button_row.addWidget(cancel_button)
+        button_row.addWidget(save_button)
+
+        layout.addWidget(title)
+        layout.addWidget(subtitle)
+        layout.addWidget(form_card)
+        layout.addLayout(button_row)
+
+    def _validate_and_accept(self) -> None:
+        """Prüft die Eingabe und bestätigt den Dialog."""
+        if not self.employee_input.text().strip():
+            QMessageBox.warning(self, "Fehlende Eingabe", "Bitte eine Mitarbeiter-ID eingeben.")
+            return
+
+        self.accept()
+
+    def get_employee_id(self) -> str:
+        """Gibt die eingegebene Mitarbeiter-ID zurück."""
+        return self.employee_input.text().strip()
+
+
+class VendingMachineCard(QFrame):
+    """Große klickbare Karte für einen Automaten."""
+
+    clicked = pyqtSignal(str)
+
+    def __init__(self, machine: VendingMachineRecord, parent: QWidget | None = None) -> None:
+        """Initialisiert die Automaten-Karte."""
+        super().__init__(parent)
+
+        self.machine = machine
         self.is_selected = False
 
-        self.setObjectName("vendingSlotCard")
+        self.setObjectName("dashboardBottomCard")
         self.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.setMinimumHeight(180)
-        self.setMaximumHeight(200)
-        self.setProperty("stockState", self._get_stock_state())
-        self.setProperty("selectedSlot", False)
+        self.setMinimumHeight(220)
+        self.setMaximumHeight(240)
+        self.setProperty("selectedMachine", False)
 
         self._create_ui()
         self._refresh_style()
 
-    def _get_stock_state(self) -> str:
-        if self.slot.quantity == 0 or self.slot.status == "Leer":
-            return "empty"
-        if self.slot.quantity < 4 or self.slot.status == "Wenig Bestand":
-            return "low"
-        return "ok"
-
     def _create_ui(self) -> None:
+        """Erstellt die Inhalte der Karte."""
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(12, 12, 12, 12)
-        layout.setSpacing(6)
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(8)
 
         top_row = QHBoxLayout()
-        top_row.setSpacing(8)
+        top_row.setSpacing(10)
 
-        self.slot_label = QLabel(self.slot.slot_code)
-        self.slot_label.setObjectName("vendingSlotCode")
+        self.id_badge = QLabel(self.machine.machine_id)
+        self.id_badge.setObjectName("dashboardHealthBadge")
 
-        self.price_label_top = QLabel(f"{self.slot.price:.2f} €")
-        self.price_label_top.setObjectName("vendingSlotPriceTop")
+        self.status_badge = QLabel(f"● {self.machine.status}")
+        self._apply_status_style(self.status_badge, self.machine.status)
 
-        top_row.addWidget(self.slot_label)
+        top_row.addWidget(self.id_badge)
         top_row.addStretch()
-        top_row.addWidget(self.price_label_top)
+        top_row.addWidget(self.status_badge)
 
-        self.icon_label = QLabel(self._get_icon())
-        self.icon_label.setObjectName("vendingSlotIcon")
+        self.icon_label = QLabel(self._get_machine_icon())
+        self.icon_label.setObjectName("dashboardSectionTitle")
         self.icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.product_label = QLabel(self.slot.product_name)
-        self.product_label.setObjectName("vendingSlotTitle")
-        self.product_label.setWordWrap(True)
-        self.product_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.location_label = QLabel(self.machine.location)
+        self.location_label.setObjectName("dashboardSectionTitle")
+        self.location_label.setWordWrap(True)
+        self.location_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.category_label = QLabel(self.slot.category)
-        self.category_label.setObjectName("vendingSlotCategory")
-        self.category_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.type_label = QLabel(self.machine.machine_type)
+        self.type_label.setObjectName("dashboardSectionSubtitle")
+        self.type_label.setWordWrap(True)
+        self.type_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.stock_label = QLabel(self._get_stock_text())
-        self.stock_label.setObjectName("vendingSlotStock")
-        self.stock_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.employee_label = QLabel(f"Mitarbeiter: {self.machine.assigned_employee}")
+        self.employee_label.setObjectName("dashboardActivityItem")
+        self.employee_label.setWordWrap(True)
+        self.employee_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.status_label = QLabel(self.slot.status)
-        self.status_label.setObjectName("vendingSlotStatus")
-        self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.note_label = QLabel(
+            f"Notiz: {self.machine.note if self.machine.note else '-'}"
+        )
+        self.note_label.setObjectName("dashboardSectionSubtitle")
+        self.note_label.setWordWrap(True)
+        self.note_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         layout.addLayout(top_row)
         layout.addWidget(self.icon_label)
-        layout.addWidget(self.product_label)
-        layout.addWidget(self.category_label)
+        layout.addWidget(self.location_label)
+        layout.addWidget(self.type_label)
+        layout.addSpacing(4)
+        layout.addWidget(self.employee_label)
+        layout.addWidget(self.note_label)
         layout.addStretch()
-        layout.addWidget(self.stock_label)
-        layout.addWidget(self.status_label)
 
-    def _get_icon(self) -> str:
-        category = self.slot.category.lower()
-        if "getränke" in category:
+    def _get_machine_icon(self) -> str:
+        """Liefert ein passendes Symbol für den Automatentyp."""
+        machine_type = self.machine.machine_type.lower()
+        if "drink" in machine_type or "getränk" in machine_type:
             return "🥤"
-        if "snacks" in category:
+        if "snack" in machine_type:
             return "🍫"
-        if "supplements" in category:
-            return "💪"
-        return "📦"
+        if "combo" in machine_type or "mixed" in machine_type:
+            return "🥤"
+        return "🏧"
 
-    def _get_stock_text(self) -> str:
-        return f"Bestand: {self.slot.quantity}"
+    def _apply_status_style(self, label: QLabel, status: str) -> None:
+        """Setzt den Stil des Status-Badges."""
+        if status == "Aktiv":
+            label.setObjectName("dashboardStatusOk")
+        else:
+            label.setObjectName("dashboardStatusCritical")
 
     def set_selected(self, selected: bool) -> None:
+        """Markiert die Karte als ausgewählt oder nicht ausgewählt."""
         self.is_selected = selected
-        self.setProperty("selectedSlot", selected)
+        self.setProperty("selectedMachine", selected)
         self._refresh_style()
 
     def _refresh_style(self) -> None:
-        self.setProperty("stockState", self._get_stock_state())
+        """Aktualisiert den Stil der Karte."""
         self.style().unpolish(self)
         self.style().polish(self)
         self.update()
 
-    def mouseReleaseEvent(self, event) -> None:
+    def mouseReleaseEvent(self, event: QMouseEvent) -> None:
+        """Sendet das Klicksignal bei linker Maustaste."""
         if event.button() == Qt.MouseButton.LeftButton:
-            self.clicked.emit(self.slot.slot_code, self.slot.machine_name)
+            self.clicked.emit(self.machine.machine_id)
         super().mouseReleaseEvent(event)
 
 
-class VendingMachineWidget(QFrame):
-    """Visueller Automat mit Display, Glasbereich, Slots und Ausgabefach."""
-
-    slot_selected = pyqtSignal(str, str)
-
-    def __init__(
-        self,
-        machine_name: str,
-        slots: list[VendingSlotRecord],
-        parent: QWidget | None = None,
-    ) -> None:
-        super().__init__(parent)
-        self.machine_name = machine_name
-        self.slots = slots
-        self.slot_cards: dict[tuple[str, str], VendingSlotCard] = {}
-
-        self.setObjectName("vendingMachineFrame")
-        self._create_ui()
-
-    def _create_ui(self) -> None:
-        outer_layout = QVBoxLayout(self)
-        outer_layout.setContentsMargins(18, 18, 18, 18)
-        outer_layout.setSpacing(14)
-
-        self.display_card = QFrame()
-        self.display_card.setObjectName("vendingMachineDisplay")
-
-        display_layout = QHBoxLayout(self.display_card)
-        display_layout.setContentsMargins(14, 12, 14, 12)
-        display_layout.setSpacing(10)
-
-        self.machine_title = QLabel(self.machine_name.upper())
-        self.machine_title.setObjectName("vendingMachineTitle")
-
-        self.machine_info = QLabel(f"{len(self.slots)} Fächer aktiv")
-        self.machine_info.setObjectName("vendingMachineInfo")
-
-        display_layout.addWidget(self.machine_title)
-        display_layout.addStretch()
-        display_layout.addWidget(self.machine_info)
-
-        self.glass_area = QFrame()
-        self.glass_area.setObjectName("vendingGlassArea")
-
-        glass_layout = QVBoxLayout(self.glass_area)
-        glass_layout.setContentsMargins(14, 14, 14, 14)
-        glass_layout.setSpacing(12)
-
-        self.slot_grid = QGridLayout()
-        self.slot_grid.setHorizontalSpacing(12)
-        self.slot_grid.setVerticalSpacing(12)
-
-        sorted_slots = sorted(self.slots, key=lambda s: s.slot_code)
-
-        for index, slot in enumerate(sorted_slots):
-            card = VendingSlotCard(slot)
-            card.clicked.connect(self.slot_selected.emit)
-            self.slot_cards[(slot.slot_code, slot.machine_name)] = card
-
-            row = index // 3
-            col = index % 3
-            self.slot_grid.addWidget(card, row, col)
-
-        for col in range(3):
-            self.slot_grid.setColumnStretch(col, 1)
-
-        glass_layout.addLayout(self.slot_grid)
-
-        self.output_tray = QFrame()
-        self.output_tray.setObjectName("vendingOutputTray")
-
-        tray_layout = QHBoxLayout(self.output_tray)
-        tray_layout.setContentsMargins(12, 10, 12, 10)
-
-        tray_label = QLabel("Ausgabefach")
-        tray_label.setObjectName("vendingOutputLabel")
-
-        tray_layout.addStretch()
-        tray_layout.addWidget(tray_label)
-        tray_layout.addStretch()
-
-        outer_layout.addWidget(self.display_card)
-        outer_layout.addWidget(self.glass_area)
-        outer_layout.addWidget(self.output_tray)
-
-    def set_selected_slot(self, slot_code: str | None, machine_name: str | None) -> None:
-        for key, card in self.slot_cards.items():
-            is_selected = key == (slot_code, machine_name)
-            card.set_selected(is_selected)
-
-
 class VendingTableDialog(QDialog):
+    """Große Tabellenansicht für Automaten."""
+
     TABLE_COLUMNS = [
-        "Slot",
-        "Automat",
-        "Produkt",
-        "Kategorie",
-        "Preis",
-        "Bestand",
+        "Maschinen-ID",
+        "Standort",
+        "Typ",
+        "Zugewiesener Mitarbeiter",
         "Status",
         "Notiz",
     ]
 
-    def __init__(self, parent: QWidget | None = None, slots: list[VendingSlotRecord] | None = None) -> None:
+    def __init__(
+        self,
+        parent: QWidget | None = None,
+        machines: list[VendingMachineRecord] | None = None,
+    ) -> None:
+        """Initialisiert den Tabellen-Dialog."""
         super().__init__(parent)
-        self.slots = slots or []
 
-        self.setWindowTitle("Vending-Übersicht - vergrößerte Ansicht")
-        self.setMinimumSize(1300, 780)
-        self.resize(1440, 840)
+        self.machines = machines or []
+
+        self.setWindowTitle("Automaten-Übersicht - vergrößerte Ansicht")
+        self.setMinimumSize(1250, 760)
+        self.resize(1380, 820)
 
         self._create_ui()
         self._populate_table()
 
     def _create_ui(self) -> None:
+        """Erstellt die Oberfläche der großen Tabellenansicht."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(18, 18, 18, 18)
         layout.setSpacing(12)
 
-        title = QLabel("Vending-Übersicht")
+        title = QLabel("Automaten-Übersicht")
         title.setObjectName("dashboardSectionTitle")
 
-        subtitle = QLabel("Große Tabellenansicht aller gefilterten Automaten-Fächer.")
+        subtitle = QLabel("Große Tabellenansicht aller gefilterten Automaten.")
         subtitle.setObjectName("dashboardSectionSubtitle")
         subtitle.setWordWrap(True)
 
@@ -292,32 +391,30 @@ class VendingTableDialog(QDialog):
         layout.addLayout(button_row)
 
     def _populate_table(self) -> None:
+        """Füllt die Tabelle mit allen übergebenen Automaten."""
         self.table.setSortingEnabled(False)
-        self.table.setRowCount(len(self.slots))
+        self.table.setRowCount(len(self.machines))
+        self.table.clearContents()
 
-        for row, slot in enumerate(self.slots):
+        for row, machine in enumerate(self.machines):
             values = [
-                slot.slot_code,
-                slot.machine_name,
-                slot.product_name,
-                slot.category,
-                f"{slot.price:.2f} €",
-                slot.quantity,
-                slot.status,
-                slot.note,
+                machine.machine_id,
+                machine.location,
+                machine.machine_type,
+                machine.assigned_employee,
+                machine.status,
+                machine.note,
             ]
 
             for col, value in enumerate(values):
                 item = QTableWidgetItem(str(value))
                 item.setTextAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
-                if col == 5:
-                    if slot.quantity == 0:
-                        item.setForeground(QColor("#ff8aa5"))
-                    elif slot.quantity < 4:
-                        item.setForeground(QColor("#ffbb72"))
-                    else:
+                if col == 4:
+                    if machine.status == "Aktiv":
                         item.setForeground(QColor("#8df0c4"))
+                    else:
+                        item.setForeground(QColor("#ff8aa5"))
 
                 self.table.setItem(row, col, item)
 
@@ -326,31 +423,32 @@ class VendingTableDialog(QDialog):
 
 
 class VendingPage(QWidget):
+    """Seite zur Verwaltung und Übersicht aller Automaten."""
+
     TABLE_COLUMNS = [
-        "Slot",
-        "Automat",
-        "Produkt",
-        "Kategorie",
-        "Preis",
-        "Bestand",
+        "Maschinen-ID",
+        "Standort",
+        "Typ",
+        "Zugewiesener Mitarbeiter",
         "Status",
         "Notiz",
     ]
 
     def __init__(self, controller: Any | None = None) -> None:
+        """Initialisiert die Automatenseite."""
         super().__init__()
+
         self.controller = controller
-        self.slots: list[VendingSlotRecord] = []
-        self.filtered_slots: list[VendingSlotRecord] = []
-        self.selected_slot_code: str | None = None
-        self.selected_machine_name: str | None = None
-        self.machine_widgets: dict[str, VendingMachineWidget] = {}
+        self.machines: list[VendingMachineRecord] = []
+        self.filtered_machines: list[VendingMachineRecord] = []
+        self.selected_machine_id: str | None = None
+        self.machine_cards: dict[str, VendingMachineCard] = {}
 
         self._create_ui()
-        self._load_demo_data()
         self.refresh_data()
 
     def _create_ui(self) -> None:
+        """Erstellt die komplette Oberfläche der Seite."""
         root_layout = QVBoxLayout(self)
         root_layout.setContentsMargins(0, 0, 0, 0)
         root_layout.setSpacing(0)
@@ -383,6 +481,7 @@ class VendingPage(QWidget):
         root_layout.addWidget(self.page_scroll)
 
     def _create_top_section(self) -> QWidget:
+        """Erstellt Suchbereich, Filter und Kennzahlen."""
         card = QFrame()
         card.setObjectName("dashboardBottomCard")
 
@@ -390,11 +489,11 @@ class VendingPage(QWidget):
         layout.setContentsMargins(18, 18, 18, 18)
         layout.setSpacing(14)
 
-        title = QLabel("Vending-Monitoring 2.0")
+        title = QLabel("Automatenverwaltung")
         title.setObjectName("dashboardSectionTitle")
 
         subtitle = QLabel(
-            "Visualisierte Snack- und Getränkeautomaten mit klickbaren Fächern, Detailansicht und Verwaltungstabelle."
+            "Verwaltung der vorhandenen Automaten mit Standort, Typ, Zuständigkeit und Aktivstatus."
         )
         subtitle.setObjectName("dashboardSectionSubtitle")
         subtitle.setWordWrap(True)
@@ -403,24 +502,33 @@ class VendingPage(QWidget):
         controls.setSpacing(12)
 
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("Suche nach Produkt, Slot oder Automat ...")
+        self.search_input.setPlaceholderText(
+            "Suche nach Maschinen-ID, Standort, Typ oder Mitarbeiter ..."
+        )
         self.search_input.textChanged.connect(self.apply_filters)
 
-        self.machine_filter = QComboBox()
-        self.machine_filter.addItems(["Alle Automaten", "Automat Eingang", "Automat Lounge"])
-        self.machine_filter.currentTextChanged.connect(self.apply_filters)
+        self.status_filter = QComboBox()
+        self.status_filter.addItems(["Alle Status", "Aktiv", "Inaktiv"])
+        self.status_filter.currentTextChanged.connect(self.apply_filters)
 
-        self.category_filter = QComboBox()
-        self.category_filter.addItems(["Alle Kategorien", "Getränke", "Snacks", "Supplements"])
-        self.category_filter.currentTextChanged.connect(self.apply_filters)
+        self.type_filter = QComboBox()
+        self.type_filter.addItems(
+            ["Alle Typen", "Snack", "Getränke", "Combo", "Sonstiges"]
+        )
+        self.type_filter.currentTextChanged.connect(self.apply_filters)
+
+        self.add_button = QPushButton("➕ Automat hinzufügen")
+        self.add_button.setObjectName("primaryButton")
+        self.add_button.clicked.connect(self.create_machine)
 
         self.expand_button = QPushButton("🔍 Tabelle vergrößern")
         self.expand_button.setObjectName("secondaryButton")
         self.expand_button.clicked.connect(self.open_table_dialog)
 
         controls.addWidget(self.search_input, 2)
-        controls.addWidget(self.machine_filter, 1)
-        controls.addWidget(self.category_filter, 1)
+        controls.addWidget(self.status_filter, 1)
+        controls.addWidget(self.type_filter, 1)
+        controls.addWidget(self.add_button)
         controls.addWidget(self.expand_button)
 
         stats = QGridLayout()
@@ -428,38 +536,38 @@ class VendingPage(QWidget):
         stats.setVerticalSpacing(18)
 
         self.machine_count_card = StatCard(
-            title="Automaten",
+            title="Automaten gesamt",
             value="0",
-            subtitle="Sichtbare Automaten",
+            subtitle="Alle sichtbaren Automaten",
             icon="🥤",
             accent="blue",
         )
-        self.occupied_card = StatCard(
-            title="Belegte Fächer",
+        self.active_card = StatCard(
+            title="Aktiv",
             value="0",
-            subtitle="Mit Produkt gefüllt",
-            icon="📦",
+            subtitle="Aktiv geschaltete Automaten",
+            icon="✅",
             accent="green",
         )
-        self.empty_card = StatCard(
-            title="Leere Fächer",
+        self.inactive_card = StatCard(
+            title="Inaktiv",
             value="0",
-            subtitle="Bestand gleich 0",
+            subtitle="Deaktivierte Automaten",
             icon="⚠",
             accent="red",
         )
-        self.low_card = StatCard(
-            title="Kritische Fächer",
+        self.assigned_card = StatCard(
+            title="Zugewiesen",
             value="0",
-            subtitle="Wenig Bestand",
-            icon="🔔",
+            subtitle="Mit Mitarbeiter-Zuordnung",
+            icon="👤",
             accent="orange",
         )
 
         stats.addWidget(self.machine_count_card, 0, 0)
-        stats.addWidget(self.occupied_card, 0, 1)
-        stats.addWidget(self.empty_card, 0, 2)
-        stats.addWidget(self.low_card, 0, 3)
+        stats.addWidget(self.active_card, 0, 1)
+        stats.addWidget(self.inactive_card, 0, 2)
+        stats.addWidget(self.assigned_card, 0, 3)
 
         for col in range(4):
             stats.setColumnStretch(col, 1)
@@ -472,6 +580,7 @@ class VendingPage(QWidget):
         return card
 
     def _create_machine_visual(self) -> QWidget:
+        """Erstellt die Kartenansicht der Automaten."""
         container = QFrame()
         container.setObjectName("dashboardBottomCard")
         container.setMinimumHeight(620)
@@ -480,32 +589,34 @@ class VendingPage(QWidget):
         layout.setContentsMargins(18, 18, 18, 18)
         layout.setSpacing(12)
 
-        title = QLabel("Automaten-Simulator")
+        title = QLabel("Automatenübersicht")
         title.setObjectName("dashboardSectionTitle")
 
-        subtitle = QLabel("Hier wirken die Fächer wie echte Automaten-Slots hinter Glas.")
+        subtitle = QLabel("Klicke auf einen Automaten, um rechts die Details zu sehen.")
         subtitle.setObjectName("dashboardSectionSubtitle")
         subtitle.setWordWrap(True)
 
-        self.slot_scroll = QScrollArea()
-        self.slot_scroll.setWidgetResizable(True)
-        self.slot_scroll.setFrameShape(QFrame.Shape.NoFrame)
-        self.slot_scroll.setMinimumHeight(500)
+        self.machine_scroll = QScrollArea()
+        self.machine_scroll.setWidgetResizable(True)
+        self.machine_scroll.setFrameShape(QFrame.Shape.NoFrame)
+        self.machine_scroll.setMinimumHeight(500)
 
-        self.slot_content = QWidget()
-        self.machine_layout = QVBoxLayout(self.slot_content)
-        self.machine_layout.setContentsMargins(0, 0, 0, 0)
-        self.machine_layout.setSpacing(18)
+        self.machine_content = QWidget()
+        self.machine_grid = QGridLayout(self.machine_content)
+        self.machine_grid.setContentsMargins(0, 0, 0, 0)
+        self.machine_grid.setHorizontalSpacing(16)
+        self.machine_grid.setVerticalSpacing(16)
 
-        self.slot_scroll.setWidget(self.slot_content)
+        self.machine_scroll.setWidget(self.machine_content)
 
         layout.addWidget(title)
         layout.addWidget(subtitle)
-        layout.addWidget(self.slot_scroll, 1)
+        layout.addWidget(self.machine_scroll, 1)
 
         return container
 
     def _create_detail_panel(self) -> QWidget:
+        """Erstellt das rechte Detailpanel."""
         outer_container = QFrame()
         outer_container.setObjectName("dashboardBottomCard")
         outer_container.setMinimumHeight(620)
@@ -524,40 +635,69 @@ class VendingPage(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(14)
 
-        title = QLabel("Slot-Details")
+        title = QLabel("Automaten-Details")
         title.setObjectName("dashboardSectionTitle")
 
-        subtitle = QLabel("Detailansicht des aktuell ausgewählten Automaten-Fachs.")
+        subtitle = QLabel("Detailansicht des aktuell ausgewählten Automaten.")
         subtitle.setObjectName("dashboardSectionSubtitle")
         subtitle.setWordWrap(True)
 
-        self.selected_slot = QLabel("Kein Fach ausgewählt")
-        self.selected_slot.setObjectName("dashboardSectionTitle")
-        self.selected_slot.setWordWrap(True)
+        self.selected_machine = QLabel("Kein Automat ausgewählt")
+        self.selected_machine.setObjectName("dashboardSectionTitle")
+        self.selected_machine.setWordWrap(True)
 
         self.selected_status = QLabel("● -")
         self.selected_status.setObjectName("dashboardSectionSubtitle")
 
-        self.detail_machine = self._build_detail_label("Automat", "-")
-        self.detail_product = self._build_detail_label("Produkt", "-")
-        self.detail_category = self._build_detail_label("Kategorie", "-")
-        self.detail_price = self._build_detail_label("Preis", "-")
-        self.detail_quantity = self._build_detail_label("Bestand", "-")
+        self.detail_id = self._build_detail_label("Maschinen-ID", "-")
+        self.detail_location = self._build_detail_label("Standort", "-")
+        self.detail_type = self._build_detail_label("Typ", "-")
+        self.detail_employee = self._build_detail_label("Zugewiesener Mitarbeiter", "-")
         self.detail_status = self._build_detail_label("Status", "-")
         self.detail_note = self._build_detail_label("Notiz", "-")
+
+        button_row_1 = QHBoxLayout()
+        button_row_1.setSpacing(10)
+
+        self.activate_button = QPushButton("✅ Aktivieren")
+        self.activate_button.setObjectName("secondaryButton")
+        self.activate_button.clicked.connect(self.activate_selected_machine)
+
+        self.deactivate_button = QPushButton("⛔ Deaktivieren")
+        self.deactivate_button.setObjectName("secondaryButton")
+        self.deactivate_button.clicked.connect(self.deactivate_selected_machine)
+
+        button_row_1.addWidget(self.activate_button)
+        button_row_1.addWidget(self.deactivate_button)
+
+        button_row_2 = QHBoxLayout()
+        button_row_2.setSpacing(10)
+
+        self.assign_button = QPushButton("👤 Mitarbeiter zuweisen")
+        self.assign_button.setObjectName("secondaryButton")
+        self.assign_button.clicked.connect(self.assign_employee_to_selected_machine)
+
+        self.delete_button = QPushButton("🗑 Löschen")
+        self.delete_button.setObjectName("secondaryButton")
+        self.delete_button.clicked.connect(self.delete_selected_machine)
+
+        button_row_2.addWidget(self.assign_button)
+        button_row_2.addWidget(self.delete_button)
 
         layout.addWidget(title)
         layout.addWidget(subtitle)
         layout.addSpacing(8)
-        layout.addWidget(self.selected_slot)
+        layout.addWidget(self.selected_machine)
         layout.addWidget(self.selected_status)
-        layout.addWidget(self.detail_machine)
-        layout.addWidget(self.detail_product)
-        layout.addWidget(self.detail_category)
-        layout.addWidget(self.detail_price)
-        layout.addWidget(self.detail_quantity)
+        layout.addWidget(self.detail_id)
+        layout.addWidget(self.detail_location)
+        layout.addWidget(self.detail_type)
+        layout.addWidget(self.detail_employee)
         layout.addWidget(self.detail_status)
         layout.addWidget(self.detail_note)
+        layout.addSpacing(8)
+        layout.addLayout(button_row_1)
+        layout.addLayout(button_row_2)
         layout.addStretch()
 
         panel_scroll.setWidget(panel_content)
@@ -566,6 +706,7 @@ class VendingPage(QWidget):
         return outer_container
 
     def _create_table_section(self) -> QWidget:
+        """Erstellt die tabellarische Übersicht der Automaten."""
         card = QFrame()
         card.setObjectName("dashboardBottomCard")
         card.setMinimumHeight(360)
@@ -574,10 +715,10 @@ class VendingPage(QWidget):
         layout.setContentsMargins(18, 18, 18, 18)
         layout.setSpacing(12)
 
-        title = QLabel("Vending-Tabelle")
+        title = QLabel("Automaten-Tabelle")
         title.setObjectName("dashboardSectionTitle")
 
-        subtitle = QLabel("Klassische Tabellenansicht aller gefilterten Fächer.")
+        subtitle = QLabel("Klassische Tabellenansicht aller gefilterten Automaten.")
         subtitle.setObjectName("dashboardSectionSubtitle")
 
         self.vending_table = QTableWidget()
@@ -600,220 +741,399 @@ class VendingPage(QWidget):
         return card
 
     def _build_detail_label(self, title: str, value: str) -> QLabel:
+        """Erstellt ein Detail-Label für das rechte Panel."""
         label = QLabel(f"<b>{title}:</b><br>{value}")
         label.setObjectName("dashboardActivityItem")
         label.setWordWrap(True)
         return label
 
-    def _load_demo_data(self) -> None:
-        self.slots = [
-            VendingSlotRecord("A1", "Automat Eingang", "Water 0.5L", "Getränke", 2.00, 8, "Verfügbar", ""),
-            VendingSlotRecord("A2", "Automat Eingang", "Cola Zero", "Getränke", 2.50, 2, "Wenig Bestand", ""),
-            VendingSlotRecord("A3", "Automat Eingang", "Isotonic Drink", "Getränke", 2.80, 0, "Leer", "Nachfüllen"),
-            VendingSlotRecord("B1", "Automat Eingang", "Protein Bar", "Snacks", 2.90, 6, "Verfügbar", ""),
-            VendingSlotRecord("B2", "Automat Eingang", "Nuts Mix", "Snacks", 2.60, 1, "Wenig Bestand", ""),
-            VendingSlotRecord("B3", "Automat Eingang", "Chocolate Bar", "Snacks", 1.90, 0, "Leer", "Ausverkauft"),
-            VendingSlotRecord("C1", "Automat Lounge", "Energy Drink", "Getränke", 3.20, 7, "Verfügbar", ""),
-            VendingSlotRecord("C2", "Automat Lounge", "Protein Shake", "Supplements", 4.50, 3, "Wenig Bestand", ""),
-            VendingSlotRecord("C3", "Automat Lounge", "BCAA Drink", "Supplements", 4.90, 5, "Verfügbar", ""),
-            VendingSlotRecord("D1", "Automat Lounge", "Protein Cookie", "Snacks", 3.40, 4, "Verfügbar", ""),
-            VendingSlotRecord("D2", "Automat Lounge", "Vitamin Water", "Getränke", 2.70, 0, "Leer", "Fach leer"),
-            VendingSlotRecord("D3", "Automat Lounge", "Pre-Workout Shot", "Supplements", 3.90, 2, "Wenig Bestand", ""),
-        ]
+    def _map_machine_to_record(self, machine: Any) -> VendingMachineRecord:
+        """Wandelt ein Controller-Objekt in ein VendingMachineRecord um."""
+        machine_id = getattr(machine, "machine_id", "") or ""
+        location = getattr(machine, "location", "") or ""
+        machine_type = getattr(machine, "machine_type", "") or ""
+        assigned_employee_id = getattr(machine, "assigned_employee_id", "") or ""
+        active = getattr(machine, "active", False)
+
+        status = "Aktiv" if active else "Inaktiv"
+
+        return VendingMachineRecord(
+            machine_id=machine_id,
+            location=location,
+            machine_type=machine_type if machine_type else "Sonstiges",
+            assigned_employee=assigned_employee_id if assigned_employee_id else "-",
+            status=status,
+            note="",
+        )
+
+    def _find_machine(self, machine_id: str | None) -> VendingMachineRecord | None:
+        """Sucht einen Automaten anhand seiner ID."""
+        if machine_id is None:
+            return None
+
+        for machine in self.filtered_machines:
+            if machine.machine_id == machine_id:
+                return machine
+
+        return None
 
     def refresh_data(self) -> None:
-        if self.controller is not None:
-            try:
-                slots = self.controller.get_all_vending_slots()
-                self.slots = list(slots)
-            except Exception:
-                pass
+        """Lädt Automatendaten neu und aktualisiert die Ansicht."""
+        try:
+            if self.controller is not None:
+                machines = self.controller.get_all_machines()
+                self.machines = [self._map_machine_to_record(machine) for machine in machines]
+            else:
+                self.machines = []
 
-        self.apply_filters()
+            self.apply_filters()
+        except Exception as error:
+            QMessageBox.critical(
+                self,
+                "Fehler",
+                f"Automaten konnten nicht geladen werden:\n{error}",
+            )
+            self.machines = []
+            self.apply_filters()
 
     def apply_filters(self) -> None:
+        """Filtert Automaten nach Suche, Status und Typ."""
         search_text = self.search_input.text().strip().lower()
-        selected_machine = self.machine_filter.currentText()
-        selected_category = self.category_filter.currentText()
+        selected_status = self.status_filter.currentText()
+        selected_type = self.type_filter.currentText()
 
-        result: list[VendingSlotRecord] = []
+        result: list[VendingMachineRecord] = []
 
-        for slot in self.slots:
+        for machine in self.machines:
             searchable = " ".join(
                 [
-                    slot.slot_code,
-                    slot.machine_name,
-                    slot.product_name,
-                    slot.category,
-                    slot.status,
-                    slot.note,
+                    machine.machine_id,
+                    machine.location,
+                    machine.machine_type,
+                    machine.assigned_employee,
+                    machine.status,
+                    machine.note,
                 ]
             ).lower()
 
             matches_search = search_text in searchable
-            matches_machine = (
-                selected_machine == "Alle Automaten" or slot.machine_name == selected_machine
-            )
-            matches_category = (
-                selected_category == "Alle Kategorien" or slot.category == selected_category
-            )
+            matches_status = selected_status == "Alle Status" or machine.status == selected_status
+            matches_type = selected_type == "Alle Typen" or machine.machine_type == selected_type
 
-            if matches_search and matches_machine and matches_category:
-                result.append(slot)
+            if matches_search and matches_status and matches_type:
+                result.append(machine)
 
-        self.filtered_slots = result
+        self.filtered_machines = result
         self._rebuild_machine_visual()
         self._populate_table()
         self._update_stats()
 
-        if self.filtered_slots:
-            current = self._find_slot(self.selected_slot_code, self.selected_machine_name)
+        if self.filtered_machines:
+            current = self._find_machine(self.selected_machine_id)
             if current is None:
-                self.select_slot(self.filtered_slots[0].slot_code, self.filtered_slots[0].machine_name)
+                self.select_machine(self.filtered_machines[0].machine_id)
             else:
-                self.select_slot(current.slot_code, current.machine_name)
+                self.select_machine(current.machine_id)
         else:
             self._clear_detail_panel()
 
     def _rebuild_machine_visual(self) -> None:
-        while self.machine_layout.count():
-            item = self.machine_layout.takeAt(0)
+        """Erstellt die Kartenansicht der gefilterten Automaten neu."""
+        while self.machine_grid.count():
+            item = self.machine_grid.takeAt(0)
             widget = item.widget()
             if widget is not None:
                 widget.deleteLater()
 
-        self.machine_widgets.clear()
+        self.machine_cards.clear()
 
-        grouped: dict[str, list[VendingSlotRecord]] = {}
-        for slot in self.filtered_slots:
-            grouped.setdefault(slot.machine_name, []).append(slot)
+        for index, machine in enumerate(self.filtered_machines):
+            card = VendingMachineCard(machine)
+            card.clicked.connect(self.select_machine)
+            self.machine_cards[machine.machine_id] = card
 
-        for machine_name, slots in grouped.items():
-            machine_widget = VendingMachineWidget(machine_name, slots)
-            machine_widget.slot_selected.connect(self.select_slot)
-            self.machine_widgets[machine_name] = machine_widget
-            self.machine_layout.addWidget(machine_widget)
+            row = index // 2
+            col = index % 2
+            self.machine_grid.addWidget(card, row, col)
 
-        self.machine_layout.addStretch()
+        self.machine_grid.setColumnStretch(0, 1)
+        self.machine_grid.setColumnStretch(1, 1)
 
     def _populate_table(self) -> None:
+        """Füllt die Tabelle mit den gefilterten Automaten."""
         self.vending_table.setSortingEnabled(False)
-        self.vending_table.setRowCount(len(self.filtered_slots))
+        self.vending_table.setRowCount(len(self.filtered_machines))
+        self.vending_table.clearContents()
 
-        for row, slot in enumerate(self.filtered_slots):
+        for row, machine in enumerate(self.filtered_machines):
             values = [
-                slot.slot_code,
-                slot.machine_name,
-                slot.product_name,
-                slot.category,
-                f"{slot.price:.2f} €",
-                slot.quantity,
-                slot.status,
-                slot.note,
+                machine.machine_id,
+                machine.location,
+                machine.machine_type,
+                machine.assigned_employee,
+                machine.status,
+                machine.note,
             ]
 
             for col, value in enumerate(values):
                 item = QTableWidgetItem(str(value))
                 item.setTextAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
-                if col == 5:
-                    if slot.quantity == 0:
-                        item.setForeground(QColor("#ff8aa5"))
-                    elif slot.quantity < 4:
-                        item.setForeground(QColor("#ffbb72"))
-                    else:
+                if col == 4:
+                    if machine.status == "Aktiv":
                         item.setForeground(QColor("#8df0c4"))
+                    else:
+                        item.setForeground(QColor("#ff8aa5"))
 
                 self.vending_table.setItem(row, col, item)
 
         self.vending_table.resizeColumnsToContents()
         self.vending_table.setSortingEnabled(True)
 
-        if self.filtered_slots and self.vending_table.rowCount() > 0:
+        if self.filtered_machines and self.vending_table.rowCount() > 0:
             self.vending_table.selectRow(0)
 
     def _select_from_table(self) -> None:
+        """Übernimmt die Auswahl aus der Tabelle."""
         row = self.vending_table.currentRow()
         if row < 0:
             return
 
-        slot_item = self.vending_table.item(row, 0)
-        machine_item = self.vending_table.item(row, 1)
-
-        if slot_item is None or machine_item is None:
+        machine_item = self.vending_table.item(row, 0)
+        if machine_item is None:
             return
 
-        self.select_slot(slot_item.text(), machine_item.text())
+        self.select_machine(machine_item.text())
 
-    def select_slot(self, slot_code: str, machine_name: str) -> None:
-        self.selected_slot_code = slot_code
-        self.selected_machine_name = machine_name
-
-        selected = self._find_slot(slot_code, machine_name)
+    def select_machine(self, machine_id: str) -> None:
+        """Wählt einen Automaten aus und aktualisiert die Detailansicht."""
+        self.selected_machine_id = machine_id
+        selected = self._find_machine(machine_id)
 
         if selected is None:
             self._clear_detail_panel()
             return
 
-        self.selected_slot.setText(f"Fach {selected.slot_code}")
+        self.selected_machine.setText(f"Automat {selected.machine_id}")
         self.selected_status.setText(f"● {selected.status}")
 
-        if selected.quantity == 0 or selected.status == "Leer":
-            self.selected_status.setObjectName("dashboardStatusCritical")
-        elif selected.quantity < 4:
-            self.selected_status.setObjectName("dashboardStatusWarn")
-        else:
+        if selected.status == "Aktiv":
             self.selected_status.setObjectName("dashboardStatusOk")
+        else:
+            self.selected_status.setObjectName("dashboardStatusCritical")
 
         self.selected_status.style().unpolish(self.selected_status)
         self.selected_status.style().polish(self.selected_status)
 
-        self.detail_machine.setText(f"<b>Automat:</b><br>{selected.machine_name}")
-        self.detail_product.setText(f"<b>Produkt:</b><br>{selected.product_name}")
-        self.detail_category.setText(f"<b>Kategorie:</b><br>{selected.category}")
-        self.detail_price.setText(f"<b>Preis:</b><br>{selected.price:.2f} €")
-        self.detail_quantity.setText(f"<b>Bestand:</b><br>{selected.quantity}")
+        self.detail_id.setText(f"<b>Maschinen-ID:</b><br>{selected.machine_id}")
+        self.detail_location.setText(f"<b>Standort:</b><br>{selected.location}")
+        self.detail_type.setText(f"<b>Typ:</b><br>{selected.machine_type}")
+        self.detail_employee.setText(f"<b>Zugewiesener Mitarbeiter:</b><br>{selected.assigned_employee}")
         self.detail_status.setText(f"<b>Status:</b><br>{selected.status}")
         self.detail_note.setText(f"<b>Notiz:</b><br>{selected.note if selected.note else '-'}")
 
-        for machine_widget in self.machine_widgets.values():
-            machine_widget.set_selected_slot(slot_code, machine_name)
+        for current_id, card in self.machine_cards.items():
+            card.set_selected(current_id == machine_id)
 
     def _clear_detail_panel(self) -> None:
-        self.selected_slot.setText("Kein Fach ausgewählt")
+        """Setzt die Detailansicht auf den Standardzustand zurück."""
+        self.selected_machine.setText("Kein Automat ausgewählt")
         self.selected_status.setText("● -")
         self.selected_status.setObjectName("dashboardSectionSubtitle")
         self.selected_status.style().unpolish(self.selected_status)
         self.selected_status.style().polish(self.selected_status)
 
-        self.detail_machine.setText("<b>Automat:</b><br>-")
-        self.detail_product.setText("<b>Produkt:</b><br>-")
-        self.detail_category.setText("<b>Kategorie:</b><br>-")
-        self.detail_price.setText("<b>Preis:</b><br>-")
-        self.detail_quantity.setText("<b>Bestand:</b><br>-")
+        self.detail_id.setText("<b>Maschinen-ID:</b><br>-")
+        self.detail_location.setText("<b>Standort:</b><br>-")
+        self.detail_type.setText("<b>Typ:</b><br>-")
+        self.detail_employee.setText("<b>Zugewiesener Mitarbeiter:</b><br>-")
         self.detail_status.setText("<b>Status:</b><br>-")
         self.detail_note.setText("<b>Notiz:</b><br>-")
 
-    def _find_slot(self, slot_code: str | None, machine_name: str | None) -> VendingSlotRecord | None:
-        if slot_code is None or machine_name is None:
-            return None
-
-        for slot in self.filtered_slots:
-            if slot.slot_code == slot_code and slot.machine_name == machine_name:
-                return slot
-        return None
+        for card in self.machine_cards.values():
+            card.set_selected(False)
 
     def _update_stats(self) -> None:
-        machines = {slot.machine_name for slot in self.filtered_slots}
-        occupied = sum(1 for slot in self.filtered_slots if slot.quantity > 0)
-        empty = sum(1 for slot in self.filtered_slots if slot.quantity == 0)
-        low = sum(1 for slot in self.filtered_slots if 0 < slot.quantity < 4)
+        """Aktualisiert die Kennzahlenkarten."""
+        machines_total = len(self.filtered_machines)
+        active = sum(1 for machine in self.filtered_machines if machine.status == "Aktiv")
+        inactive = sum(1 for machine in self.filtered_machines if machine.status == "Inaktiv")
+        assigned = sum(
+            1 for machine in self.filtered_machines
+            if machine.assigned_employee and machine.assigned_employee != "-"
+        )
 
-        self.machine_count_card.set_value_animated(len(machines))
-        self.occupied_card.set_value_animated(occupied)
-        self.empty_card.set_value_animated(empty)
-        self.low_card.set_value_animated(low)
+        self.machine_count_card.set_value_animated(machines_total)
+        self.active_card.set_value_animated(active)
+        self.inactive_card.set_value_animated(inactive)
+        self.assigned_card.set_value_animated(assigned)
+
+    def create_machine(self) -> None:
+        """Erstellt einen neuen Automaten."""
+        dialog = VendingMachineDialog(self)
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+
+        data = dialog.get_data()
+
+        try:
+            if self.controller is None:
+                QMessageBox.warning(self, "Fehler", "Kein Controller vorhanden.")
+                return
+
+            self.controller.create_machine(
+                machine_id=data["machine_id"],
+                location=data["location"],
+                machine_type=data["machine_type"],
+                assigned_employee_id=data["assigned_employee_id"],
+            )
+            self.refresh_data()
+            QMessageBox.information(
+                self,
+                "Erfolg",
+                f"Automat '{data['machine_id']}' wurde erfolgreich erstellt.",
+            )
+        except Exception as error:
+            QMessageBox.critical(
+                self,
+                "Fehler",
+                f"Automat konnte nicht erstellt werden:\n{error}",
+            )
+
+    def assign_employee_to_selected_machine(self) -> None:
+        """Weist dem ausgewählten Automaten einen Mitarbeiter zu."""
+        selected = self._find_machine(self.selected_machine_id)
+        if selected is None:
+            QMessageBox.warning(self, "Kein Automat", "Bitte zuerst einen Automaten auswählen.")
+            return
+
+        if self.controller is None:
+            QMessageBox.warning(self, "Fehler", "Kein Controller vorhanden.")
+            return
+
+        dialog = AssignMachineEmployeeDialog(
+            self,
+            machine_name=selected.machine_id,
+            current_employee=selected.assigned_employee,
+        )
+
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+
+        employee_id = dialog.get_employee_id()
+
+        try:
+            self.controller.assign_employee_to_machine(
+                selected.machine_id,
+                employee_id,
+            )
+            self.refresh_data()
+            QMessageBox.information(
+                self,
+                "Erfolg",
+                f"Mitarbeiter '{employee_id}' wurde dem Automaten zugewiesen.",
+            )
+        except Exception as error:
+            QMessageBox.critical(
+                self,
+                "Fehler",
+                f"Mitarbeiter konnte nicht zugewiesen werden:\n{error}",
+            )
+
+    def activate_selected_machine(self) -> None:
+        """Aktiviert den ausgewählten Automaten."""
+        selected = self._find_machine(self.selected_machine_id)
+        if selected is None:
+            QMessageBox.warning(self, "Kein Automat", "Bitte zuerst einen Automaten auswählen.")
+            return
+
+        if self.controller is None:
+            QMessageBox.warning(self, "Fehler", "Kein Controller vorhanden.")
+            return
+
+        try:
+            self.controller.activate_machine(selected.machine_id)
+            self.refresh_data()
+            QMessageBox.information(
+                self,
+                "Erfolg",
+                f"Automat '{selected.machine_id}' wurde aktiviert.",
+            )
+        except Exception as error:
+            QMessageBox.critical(
+                self,
+                "Fehler",
+                f"Automat konnte nicht aktiviert werden:\n{error}",
+            )
+
+    def deactivate_selected_machine(self) -> None:
+        """Deaktiviert den ausgewählten Automaten."""
+        selected = self._find_machine(self.selected_machine_id)
+        if selected is None:
+            QMessageBox.warning(self, "Kein Automat", "Bitte zuerst einen Automaten auswählen.")
+            return
+
+        if self.controller is None:
+            QMessageBox.warning(self, "Fehler", "Kein Controller vorhanden.")
+            return
+
+        try:
+            self.controller.deactivate_machine(selected.machine_id)
+            self.refresh_data()
+            QMessageBox.information(
+                self,
+                "Erfolg",
+                f"Automat '{selected.machine_id}' wurde deaktiviert.",
+            )
+        except Exception as error:
+            QMessageBox.critical(
+                self,
+                "Fehler",
+                f"Automat konnte nicht deaktiviert werden:\n{error}",
+            )
+
+    def delete_selected_machine(self) -> None:
+        """Löscht den ausgewählten Automaten."""
+        selected = self._find_machine(self.selected_machine_id)
+        if selected is None:
+            QMessageBox.warning(self, "Kein Automat", "Bitte zuerst einen Automaten auswählen.")
+            return
+
+        if self.controller is None:
+            QMessageBox.warning(self, "Fehler", "Kein Controller vorhanden.")
+            return
+
+        answer = QMessageBox.question(
+            self,
+            "Automat löschen",
+            (
+                f"Möchtest du den Automaten '{selected.machine_id}' "
+                f"am Standort '{selected.location}' wirklich löschen?"
+            ),
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+
+        if answer != QMessageBox.StandardButton.Yes:
+            return
+
+        try:
+            self.controller.delete_machine(selected.machine_id)
+            self.selected_machine_id = None
+            self.refresh_data()
+            QMessageBox.information(
+                self,
+                "Erfolg",
+                f"Automat '{selected.machine_id}' wurde gelöscht.",
+            )
+        except Exception as error:
+            QMessageBox.critical(
+                self,
+                "Fehler",
+                f"Automat konnte nicht gelöscht werden:\n{error}",
+            )
 
     def open_table_dialog(self) -> None:
-        dialog = VendingTableDialog(self, self.filtered_slots)
+        """Öffnet die vergrößerte Tabellenansicht."""
+        dialog = VendingTableDialog(self, self.filtered_machines)
         dialog.exec()

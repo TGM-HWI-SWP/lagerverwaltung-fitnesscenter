@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, Qt
-from PyQt6.QtGui import QAction, QKeyEvent, QKeySequence
+from PyQt6.QtGui import QAction, QCloseEvent, QKeyEvent, QKeySequence
 from PyQt6.QtWidgets import (
     QFrame,
     QGraphicsOpacityEffect,
@@ -34,7 +34,7 @@ from src.ui.widgets.sidebar import Sidebar
 
 @dataclass(frozen=True)
 class PageDefinition:
-    """Beschreibt eine Hauptseite der Anwendung."""
+    """Speichert die Konfiguration einer Hauptseite."""
 
     key: str
     title: str
@@ -43,7 +43,7 @@ class PageDefinition:
 
 
 class MainWindow(QMainWindow):
-    """Zentrales Hauptfenster der Fitnesscenter-Management-Software."""
+    """Hauptfenster der Anwendung mit Navigation und Seitenverwaltung."""
 
     PAGE_SHORTCUTS = {
         Qt.Key.Key_F1: 0,
@@ -57,6 +57,7 @@ class MainWindow(QMainWindow):
     }
 
     def __init__(self, controller: Any | None = None) -> None:
+        """Initialisiert das Hauptfenster."""
         super().__init__()
 
         self.controller = controller
@@ -94,14 +95,14 @@ class MainWindow(QMainWindow):
         self._animate_window_fade_in()
 
     def _configure_window(self) -> None:
-        """Setzt grundlegende Eigenschaften des Fensters."""
+        """Setzt die Grundeinstellungen des Fensters."""
         self.setWindowTitle("Fitnesscenter Management Suite")
         self.setMinimumSize(1500, 900)
         self.resize(1600, 950)
         self._show_status("Bereit | F1-F9 Navigation | F5 Aktualisieren")
 
     def _load_styles(self) -> None:
-        """Lädt das Hauptstylesheet, falls vorhanden."""
+        """Lädt das Hauptstylesheet der Anwendung."""
         qss_path = Path(__file__).resolve().parent / "styles" / "main.qss"
 
         if qss_path.exists():
@@ -112,7 +113,7 @@ class MainWindow(QMainWindow):
                 self._show_status("Stylesheet konnte nicht geladen werden")
 
     def _build_page_registry(self) -> None:
-        """Definiert alle Hauptbereiche zentral an einer Stelle."""
+        """Definiert alle Hauptseiten zentral."""
         self.page_definitions: list[PageDefinition] = [
             PageDefinition(
                 key="dashboard",
@@ -171,7 +172,7 @@ class MainWindow(QMainWindow):
         ]
 
     def _create_ui(self) -> None:
-        """Baut die komplette Oberfläche des Hauptfensters."""
+        """Erstellt die Hauptoberfläche."""
         central_widget = QWidget()
         central_widget.setObjectName("centralWidget")
         self.setCentralWidget(central_widget)
@@ -204,7 +205,7 @@ class MainWindow(QMainWindow):
         return content_widget
 
     def _create_header_card(self) -> QFrame:
-        """Erstellt den stabilen Kopfbereich über den Seiten."""
+        """Erstellt den oberen Header-Bereich."""
         header_card = QFrame()
         header_card.setObjectName("headerCard")
         header_card.setSizePolicy(
@@ -263,7 +264,7 @@ class MainWindow(QMainWindow):
         return header_card
 
     def _create_page_container(self) -> QFrame:
-        """Erstellt den Container mit animiertem Seiten-Stack."""
+        """Erstellt den Seitencontainer."""
         container = QFrame()
         container.setObjectName("pageContainer")
 
@@ -281,7 +282,7 @@ class MainWindow(QMainWindow):
         return container
 
     def _instantiate_pages(self) -> None:
-        """Erzeugt alle Seiten anhand der zentralen Definition."""
+        """Erzeugt alle Seiten aus der Registry."""
         if self.page_stack is None:
             return
 
@@ -299,7 +300,7 @@ class MainWindow(QMainWindow):
             self.page_stack.addWidget(page_widget)
 
     def _build_error_page(self, page_title: str, error_text: str) -> QWidget:
-        """Erstellt eine Fehlerseite, falls eine Page nicht geladen werden kann."""
+        """Erstellt eine Fehlerseite für nicht ladbare Seiten."""
         widget = QWidget()
         layout = QVBoxLayout(widget)
         layout.setContentsMargins(30, 30, 30, 30)
@@ -326,12 +327,12 @@ class MainWindow(QMainWindow):
         return widget
 
     def _prepare_header_animation(self) -> None:
-        """Header-Animation deaktiviert, damit der Header immer stabil sichtbar bleibt."""
+        """Deaktiviert die Header-Animation."""
         self.header_opacity_effect = None
         self.header_animation = None
 
     def _create_actions(self) -> None:
-        """Erstellt globale Aktionen und Tastenkürzel."""
+        """Erstellt globale Aktionen und Shortcuts."""
         self.refresh_action = QAction("Aktualisieren", self)
         self.refresh_action.setShortcut(QKeySequence("F5"))
         self.refresh_action.triggered.connect(self.refresh_current_page)
@@ -353,16 +354,16 @@ class MainWindow(QMainWindow):
         self.addAction(self.products_action)
 
     def _connect_signals(self) -> None:
-        """Verbindet Sidebar und Hauptfenster."""
+        """Verbindet die Signale der Oberfläche."""
         if self.sidebar is not None:
             self.sidebar.page_selected.connect(self.open_page_by_index)
 
     def _show_default_page(self) -> None:
-        """Zeigt beim Start die Dashboard-Seite."""
+        """Zeigt beim Start das Dashboard."""
         self.open_page_by_index(0, animated=False)
 
     def open_page_by_index(self, index: int, animated: bool = True) -> None:
-        """Öffnet eine Seite anhand ihres Index."""
+        """Öffnet eine Seite über ihren Index."""
         if not 0 <= index < len(self._pages):
             self._show_status("Ungültiger Seitenindex")
             return
@@ -387,7 +388,7 @@ class MainWindow(QMainWindow):
             self._show_status(f"Seite konnte nicht geöffnet werden: {error}")
 
     def open_page_by_key(self, key: str, animated: bool = True) -> None:
-        """Öffnet eine Seite anhand ihres internen Schlüssels."""
+        """Öffnet eine Seite über ihren Schlüssel."""
         index = self._page_index_by_key.get(key)
 
         if index is None:
@@ -397,7 +398,7 @@ class MainWindow(QMainWindow):
         self.open_page_by_index(index, animated=animated)
 
     def _update_header(self, title: str, subtitle: str) -> None:
-        """Aktualisiert den Header."""
+        """Aktualisiert Titel und Untertitel im Header."""
         if self.header_title_label is not None:
             self.header_title_label.setText(title)
 
@@ -405,7 +406,7 @@ class MainWindow(QMainWindow):
             self.header_subtitle_label.setText(subtitle)
 
     def update_user_display(self, username: str | None = None) -> None:
-        """Aktualisiert die Anzeige des angemeldeten Benutzers."""
+        """Aktualisiert die Benutzeranzeige im Header."""
         self.current_username = username or self.auth_service.get_logged_in_user()
 
         if self.user_label is not None:
@@ -421,37 +422,87 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage(message)
 
     def get_dashboard_snapshot(self) -> dict[str, Any]:
-        """
-        Liefert Dashboard-Daten für Live-Updates, Alerts und Analytics.
-        Kann später direkt an echte Businesslogik gebunden werden.
-        """
-        return {
-            "members": 124,
-            "employees": 18,
-            "products": 56,
-            "equipment": 32,
-            "vending": 6,
-            "low_stock": 4,
-            "member_trend": [98, 104, 109, 113, 118, 124],
-            "stock_trend": [70, 68, 66, 61, 59, 56],
-            "alerts": [
-                "Kritischer Lagerbestand bei 4 Produkten",
-                "1 Automat benötigt Sichtprüfung",
-                "2 Geräte wurden heute aktualisiert",
-            ],
-            "activities": [
-                "Neuer Mitarbeiter wurde angelegt",
-                "Lagerbestand von Proteinriegeln aktualisiert",
-                "2 Geräte wurden als verfügbar markiert",
-                "Automat im Eingangsbereich wurde geprüft",
-            ],
-        }
+        """Liefert die aktuellen Dashboard-Daten."""
+        if self.controller is None:
+            return {
+                "members": 0,
+                "employees": 0,
+                "products": 0,
+                "equipment": 0,
+                "vending": 0,
+                "low_stock": 0,
+                "member_trend": [0],
+                "stock_trend": [0],
+                "alerts": ["Kein Controller verbunden"],
+                "activities": ["Keine Live-Daten verfügbar"],
+            }
+
+        try:
+            members = self.controller.get_all_members()
+            employees = self.controller.get_all_employees()
+            products = self.controller.get_all_products()
+            equipment = self.controller.get_all_equipment()
+            machines = self.controller.get_all_machines()
+            movements = self.controller.get_movements()
+
+            low_stock = sum(1 for product in products if getattr(product, "quantity", 0) < 10)
+            critical_stock = sum(1 for product in products if getattr(product, "quantity", 0) == 0)
+
+            alerts: list[str] = []
+            if critical_stock > 0:
+                alerts.append(f"{critical_stock} Produkte sind leer")
+            if low_stock > 0:
+                alerts.append(f"{low_stock} Produkte haben kritischen Bestand")
+            if not alerts:
+                alerts.append("Keine kritischen Bestände vorhanden")
+
+            recent_activities: list[str] = []
+            for movement in movements[-4:]:
+                product_name = getattr(movement, "product_name", "Unbekanntes Produkt")
+                quantity_change = getattr(movement, "quantity_change", 0)
+                performed_by = getattr(movement, "performed_by", "system")
+
+                if quantity_change > 0:
+                    recent_activities.append(
+                        f"Wareneingang: {product_name} (+{quantity_change}) durch {performed_by}"
+                    )
+                else:
+                    recent_activities.append(
+                        f"Warenausgang: {product_name} ({quantity_change}) durch {performed_by}"
+                    )
+
+            if not recent_activities:
+                recent_activities.append("Noch keine Lagerbewegungen vorhanden")
+
+            return {
+                "members": len(members),
+                "employees": len(employees),
+                "products": len(products),
+                "equipment": len(equipment),
+                "vending": len(machines),
+                "low_stock": low_stock,
+                "member_trend": [len(members)],
+                "stock_trend": [len(products)],
+                "alerts": alerts,
+                "activities": recent_activities,
+            }
+
+        except Exception as error:
+            return {
+                "members": 0,
+                "employees": 0,
+                "products": 0,
+                "equipment": 0,
+                "vending": 0,
+                "low_stock": 0,
+                "member_trend": [0],
+                "stock_trend": [0],
+                "alerts": [f"Fehler beim Laden: {error}"],
+                "activities": ["Dashboard konnte nicht geladen werden"],
+            }
 
     def get_system_health(self) -> dict[str, str]:
-        """
-        Liefert den Gesamtzustand des Systems.
-        status: ok | warning | critical
-        """
+        """Bestimmt den aktuellen Systemstatus."""
         snapshot = self.get_dashboard_snapshot()
         low_stock = snapshot.get("low_stock", 0)
 
@@ -476,7 +527,7 @@ class MainWindow(QMainWindow):
         }
 
     def handle_dashboard_quick_action(self, action_key: str) -> None:
-        """Führt Quick Actions aus dem Dashboard aus."""
+        """Verarbeitet Quick Actions aus dem Dashboard."""
         action_map = {
             "new_member": ("members", "Quick Action: Mitglieder-Seite geöffnet"),
             "new_product": ("products", "Quick Action: Produkte-Seite geöffnet"),
@@ -495,7 +546,7 @@ class MainWindow(QMainWindow):
         self._show_status(message)
 
     def refresh_current_page(self) -> None:
-        """Aktualisiert die aktuell sichtbare Seite, falls unterstützt."""
+        """Aktualisiert die aktuell sichtbare Seite."""
         if self.page_stack is None:
             self._show_status("Keine aktive Seite gefunden")
             return
@@ -518,7 +569,7 @@ class MainWindow(QMainWindow):
             self._show_status("Für diese Seite ist noch keine Aktualisierung verfügbar")
 
     def logout(self) -> None:
-        """Meldet den aktuellen Benutzer ab und zeigt wieder das Login-Fenster."""
+        """Meldet den Benutzer ab und öffnet das Login-Fenster."""
         answer = QMessageBox.question(
             self,
             "Abmelden",
@@ -531,10 +582,9 @@ class MainWindow(QMainWindow):
             return
 
         try:
-            self.auth_service.clear_session()
-
             from src.ui.auth.login_window import LoginWindow
 
+            self.auth_service.clear_session()
             self.login_window = LoginWindow(controller=self.controller)
             self.login_window.show()
             self.close()
@@ -546,7 +596,7 @@ class MainWindow(QMainWindow):
             )
 
     def _animate_window_fade_in(self) -> None:
-        """Blendet das Hauptfenster weich ein."""
+        """Blendet das Fenster weich ein."""
         self.window_opacity_effect = QGraphicsOpacityEffect(self)
         self.setGraphicsEffect(self.window_opacity_effect)
 
@@ -562,11 +612,11 @@ class MainWindow(QMainWindow):
         self.fade_animation.start()
 
     def _animate_header_change(self) -> None:
-        """Keine Header-Animation, damit nichts verschwindet."""
+        """Lässt den Header bewusst unverändert."""
         return
 
     def keyPressEvent(self, event: QKeyEvent) -> None:
-        """Schneller Seitenwechsel über Funktionstasten."""
+        """Verarbeitet Funktionstasten für die Navigation."""
         target_index = self.PAGE_SHORTCUTS.get(event.key())
 
         if target_index is not None:
@@ -575,8 +625,8 @@ class MainWindow(QMainWindow):
 
         super().keyPressEvent(event)
 
-    def closeEvent(self, event) -> None:
-        """Räumt Animationen sauber auf."""
+    def closeEvent(self, event: QCloseEvent) -> None:
+        """Stoppt laufende Animationen beim Schließen."""
         if self.fade_animation is not None:
             self.fade_animation.stop()
 

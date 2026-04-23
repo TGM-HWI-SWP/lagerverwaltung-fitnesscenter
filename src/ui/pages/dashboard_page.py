@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from random import choice
 from typing import Any, Callable
 
@@ -16,11 +17,11 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ui.widgets.stat_card import StatCard
+from src.ui.widgets.stat_card import StatCard
 
 
 class DashboardPage(QWidget):
-    """Modernes Dashboard mit Live-Updates, Alerts, Trends und Quick Actions."""
+    """Dashboard mit Kennzahlen, Trends, Alerts und Quick Actions."""
 
     def __init__(
         self,
@@ -30,6 +31,7 @@ class DashboardPage(QWidget):
         snapshot_provider: Callable[[], dict[str, Any]] | None = None,
         health_provider: Callable[[], dict[str, str]] | None = None,
     ) -> None:
+        """Initialisiert die Dashboard-Seite."""
         super().__init__()
 
         self.controller = controller
@@ -45,9 +47,6 @@ class DashboardPage(QWidget):
         self.refresh_data()
         self._start_live_updates()
 
-    # =========================
-    # UI
-    # =========================
     def _create_ui(self) -> None:
         """Erstellt die komplette Dashboard-Oberfläche."""
         root_layout = QVBoxLayout(self)
@@ -76,7 +75,7 @@ class DashboardPage(QWidget):
         root_layout.addWidget(scroll_area)
 
     def _create_top_section(self, layout: QVBoxLayout) -> None:
-        """Erstellt den oberen Hero-Bereich mit Health Indicator."""
+        """Erstellt den oberen Dashboard-Bereich."""
         top_container = QFrame()
         top_container.setObjectName("dashboardHeroCard")
         top_container.setMinimumHeight(140)
@@ -132,7 +131,7 @@ class DashboardPage(QWidget):
         layout.addWidget(top_container)
 
     def _create_stats_grid(self, layout: QVBoxLayout) -> None:
-        """Erstellt das Grid mit klickbaren Statistik-Karten."""
+        """Erstellt das Raster mit den Statistik-Karten."""
         stats_container = QFrame()
         stats_container.setObjectName("dashboardStatsContainer")
 
@@ -208,7 +207,7 @@ class DashboardPage(QWidget):
         layout.addWidget(stats_container)
 
     def _create_bottom_section(self, layout: QVBoxLayout) -> None:
-        """Erstellt die unteren Panels."""
+        """Erstellt die unteren Dashboard-Bereiche."""
         bottom_row = QHBoxLayout()
         bottom_row.setSpacing(18)
 
@@ -220,7 +219,6 @@ class DashboardPage(QWidget):
 
         self.activity_card = self._create_activity_card()
         self.quick_actions_card = self._create_quick_actions_card()
-
         self.analytics_card = self._create_analytics_card()
         self.status_card = self._create_status_card()
 
@@ -236,7 +234,7 @@ class DashboardPage(QWidget):
         layout.addLayout(bottom_row)
 
     def _create_activity_card(self) -> QFrame:
-        """Erstellt die Karte für Aktivitäten."""
+        """Erstellt die Karte für letzte Aktivitäten."""
         card = QFrame()
         card.setObjectName("dashboardBottomCard")
 
@@ -262,7 +260,7 @@ class DashboardPage(QWidget):
         return card
 
     def _create_quick_actions_card(self) -> QFrame:
-        """Erstellt die Quick Actions."""
+        """Erstellt die Quick-Actions-Karte."""
         card = QFrame()
         card.setObjectName("dashboardBottomCard")
 
@@ -302,7 +300,7 @@ class DashboardPage(QWidget):
         return card
 
     def _create_analytics_card(self) -> QFrame:
-        """Erstellt die Mini-Analytics."""
+        """Erstellt die Mini-Analytics-Karte."""
         card = QFrame()
         card.setObjectName("dashboardBottomCard")
 
@@ -349,7 +347,7 @@ class DashboardPage(QWidget):
         return card
 
     def _create_status_card(self) -> QFrame:
-        """Erstellt die Karte für Health und Smart Alerts."""
+        """Erstellt die Status- und Alert-Karte."""
         card = QFrame()
         card.setObjectName("dashboardBottomCard")
 
@@ -384,11 +382,8 @@ class DashboardPage(QWidget):
 
         return card
 
-    # =========================
-    # WOW FEATURES
-    # =========================
     def _start_live_updates(self) -> None:
-        """Startet Realtime-Updates."""
+        """Startet den Timer für automatische Aktualisierungen."""
         self.live_timer = QTimer(self)
         self.live_timer.setInterval(6000)
         self.live_timer.timeout.connect(self.refresh_data)
@@ -402,12 +397,12 @@ class DashboardPage(QWidget):
         return button
 
     def _handle_quick_action(self, action_key: str) -> None:
-        """Leitet Quick Actions ans MainWindow weiter."""
+        """Leitet eine Quick Action weiter."""
         if callable(self.quick_action_handler):
             self.quick_action_handler(action_key)
 
     def _make_card_clickable(self, card: StatCard, page_key: str) -> None:
-        """Macht StatCards klickbar."""
+        """Verknüpft eine Karte mit einem Navigationsziel."""
         card.installEventFilter(self)
         card.setToolTip(f"Öffne {page_key}")
         self._card_targets[card] = page_key
@@ -423,11 +418,8 @@ class DashboardPage(QWidget):
 
         return super().eventFilter(watched, event)
 
-    # =========================
-    # DATA / REFRESH
-    # =========================
     def _get_snapshot(self) -> dict[str, Any]:
-        """Holt Daten vom Provider oder nutzt Demo-Daten."""
+        """Lädt einen Snapshot oder nutzt Demo-Daten."""
         if callable(self.snapshot_provider):
             snapshot = self.snapshot_provider()
             if isinstance(snapshot, dict):
@@ -435,15 +427,14 @@ class DashboardPage(QWidget):
 
         return self._get_demo_snapshot()
 
-    def _get_health(self) -> dict[str, str]:
-        """Holt Health-Status vom Provider oder nutzt Demo-Logik."""
+    def _get_health_from_snapshot(self, snapshot: dict[str, Any]) -> dict[str, str]:
+        """Bestimmt den Health-Status aus Snapshot-Daten."""
         if callable(self.health_provider):
             health = self.health_provider()
             if isinstance(health, dict):
                 return health
 
-        snapshot = self._get_demo_snapshot()
-        low_stock = snapshot.get("low_stock", 0)
+        low_stock = int(snapshot.get("low_stock", 0))
 
         if low_stock >= 6:
             return {
@@ -465,7 +456,7 @@ class DashboardPage(QWidget):
         }
 
     def _get_demo_snapshot(self) -> dict[str, Any]:
-        """Demo-Daten mit kleinen Live-Veränderungen."""
+        """Erstellt Demo-Daten mit kleinen Änderungen."""
         self._demo_tick += 1
 
         member_variants = [124, 125, 126, 124, 127]
@@ -490,22 +481,30 @@ class DashboardPage(QWidget):
 
     def _build_demo_alerts(self, low_stock: int) -> list[str]:
         """Erstellt Demo-Alerts."""
-        alerts = []
+        alerts: list[str] = []
 
         if low_stock >= 4:
             alerts.append(f"Kritischer Lagerbestand bei {low_stock} Produkten")
 
-        alerts.append(choice([
-            "1 Automat benötigt Sichtprüfung",
-            "2 Geräte wurden heute aktualisiert",
-            "Mitarbeiterdaten wurden erfolgreich synchronisiert",
-        ]))
+        alerts.append(
+            choice(
+                [
+                    "1 Automat benötigt Sichtprüfung",
+                    "2 Geräte wurden heute aktualisiert",
+                    "Mitarbeiterdaten wurden erfolgreich synchronisiert",
+                ]
+            )
+        )
 
-        alerts.append(choice([
-            "Produktdatenbank wurde zuletzt vor wenigen Sekunden aktualisiert",
-            "Systemcheck erfolgreich abgeschlossen",
-            "Lagerbewegungen wurden neu geladen",
-        ]))
+        alerts.append(
+            choice(
+                [
+                    "Produktdatenbank wurde zuletzt vor wenigen Sekunden aktualisiert",
+                    "Systemcheck erfolgreich abgeschlossen",
+                    "Lagerbewegungen wurden neu geladen",
+                ]
+            )
+        )
 
         return alerts
 
@@ -518,10 +517,80 @@ class DashboardPage(QWidget):
             "Automat im Eingangsbereich wurde geprüft",
         ]
 
+    def _get_real_member_trend(self) -> list[int]:
+        """Liefert den Mitgliedertrend der letzten sechs Monate."""
+        if self.controller is None:
+            return []
+
+        try:
+            members = self.controller.get_all_members()
+            now = datetime.now()
+            trend: list[int] = []
+
+            for months_back in range(5, -1, -1):
+                target_month = now.month - months_back
+                target_year = now.year
+
+                while target_month <= 0:
+                    target_month += 12
+                    target_year -= 1
+
+                count = 0
+                for member in members:
+                    created_at = getattr(member, "created_at", None)
+                    if (
+                        created_at is not None
+                        and getattr(created_at, "year", None) == target_year
+                        and getattr(created_at, "month", None) == target_month
+                    ):
+                        count += 1
+
+                trend.append(count)
+
+            return trend
+        except Exception:
+            return []
+
+    def _get_real_stock_trend(self) -> list[int]:
+        """Liefert den Lagertrend der letzten sechs Monate."""
+        if self.controller is None:
+            return []
+
+        try:
+            movements = self.controller.get_movements()
+            now = datetime.now()
+            trend: list[int] = []
+
+            for months_back in range(5, -1, -1):
+                target_month = now.month - months_back
+                target_year = now.year
+
+                while target_month <= 0:
+                    target_month += 12
+                    target_year -= 1
+
+                month_sum = 0
+                for movement in movements:
+                    timestamp = getattr(movement, "timestamp", None)
+                    quantity_change = getattr(movement, "quantity_change", 0)
+
+                    if (
+                        timestamp is not None
+                        and getattr(timestamp, "year", None) == target_year
+                        and getattr(timestamp, "month", None) == target_month
+                    ):
+                        month_sum += int(quantity_change)
+
+                trend.append(month_sum)
+
+            return trend
+        except Exception:
+            return []
+
     def _apply_snapshot(self, snapshot: dict[str, Any]) -> None:
-        """Schreibt Snapshot-Daten ins Dashboard."""
+        """Überträgt Snapshot-Daten in die Oberfläche."""
         self.members_card.set_value_animated(int(snapshot.get("members", 0)))
-        self.members_card.set_subtitle("+12 diesen Monat")
+        self.members_card.set_subtitle("Gesamtzahl im System")
 
         self.employees_card.set_value_animated(int(snapshot.get("employees", 0)))
         self.employees_card.set_subtitle("Aktiv im System")
@@ -542,11 +611,11 @@ class DashboardPage(QWidget):
         self._apply_card_highlight_state(low_stock)
         self._update_activities(snapshot.get("activities", []))
         self._update_analytics(snapshot)
-        self._update_health_and_alerts()
+        self._update_health_and_alerts(snapshot)
         self._update_last_refresh_label()
 
     def _apply_card_highlight_state(self, low_stock: int) -> None:
-        """Passt die kritische Karte dynamisch an."""
+        """Passt den Status der Bestandskarte an."""
         if low_stock >= 5:
             self.low_stock_card.set_accent("red")
         elif low_stock >= 3:
@@ -555,7 +624,7 @@ class DashboardPage(QWidget):
             self.low_stock_card.set_accent("green")
 
     def _update_activities(self, activities: list[str]) -> None:
-        """Aktualisiert den Activity Feed."""
+        """Aktualisiert den Bereich für letzte Aktivitäten."""
         self._clear_layout(self.activity_list_layout)
 
         for text in activities[:5]:
@@ -565,20 +634,19 @@ class DashboardPage(QWidget):
             self.activity_list_layout.addWidget(item)
 
     def _update_analytics(self, snapshot: dict[str, Any]) -> None:
-        """Aktualisiert die Mini-Analytics."""
-        member_trend = snapshot.get("member_trend", [])
-        stock_trend = snapshot.get("stock_trend", [])
+        """Aktualisiert Trends und Delta-Anzeigen."""
+        member_trend = self._get_real_member_trend() or snapshot.get("member_trend", [])
+        stock_trend = self._get_real_stock_trend() or snapshot.get("stock_trend", [])
 
         self.member_trend_chart.setText(self._to_sparkline(member_trend))
         self.stock_trend_chart.setText(self._to_sparkline(stock_trend))
 
         self.member_trend_value.setText(self._format_delta(member_trend))
-        self.stock_trend_value.setText(self._format_delta(stock_trend, invert_positive=True))
+        self.stock_trend_value.setText(self._format_delta(stock_trend))
 
-    def _update_health_and_alerts(self) -> None:
-        """Aktualisiert Health Indicator und Smart Alerts."""
-        health = self._get_health()
-        snapshot = self._get_snapshot()
+    def _update_health_and_alerts(self, snapshot: dict[str, Any]) -> None:
+        """Aktualisiert Health-Anzeige und Alerts."""
+        health = self._get_health_from_snapshot(snapshot)
         alerts = snapshot.get("alerts", [])
 
         status = health.get("status", "ok")
@@ -591,14 +659,14 @@ class DashboardPage(QWidget):
         self.health_message_label.setText(message)
 
         if status == "critical":
-            self.health_badge.setObjectName("dashboardStatusCritical")
-            self.health_status_label.setObjectName("dashboardStatusCritical")
+            object_name = "dashboardStatusCritical"
         elif status == "warning":
-            self.health_badge.setObjectName("dashboardStatusWarn")
-            self.health_status_label.setObjectName("dashboardStatusWarn")
+            object_name = "dashboardStatusWarn"
         else:
-            self.health_badge.setObjectName("dashboardStatusOk")
-            self.health_status_label.setObjectName("dashboardStatusOk")
+            object_name = "dashboardStatusOk"
+
+        self.health_badge.setObjectName(object_name)
+        self.health_status_label.setObjectName(object_name)
 
         self.health_badge.style().unpolish(self.health_badge)
         self.health_badge.style().polish(self.health_badge)
@@ -613,7 +681,7 @@ class DashboardPage(QWidget):
             self.alerts_layout.addWidget(alert_label)
 
     def _update_last_refresh_label(self) -> None:
-        """Zeigt die letzte Aktualisierung an."""
+        """Aktualisiert die Zeit der letzten Aktualisierung."""
         now = QDateTime.currentDateTime().toString("dd.MM.yyyy HH:mm:ss")
         self.last_updated_label.setText(f"Zuletzt aktualisiert: {now}")
 
@@ -623,14 +691,10 @@ class DashboardPage(QWidget):
             snapshot = self._get_snapshot()
             self._apply_snapshot(snapshot)
         except Exception:
-            fallback = self._get_demo_snapshot()
-            self._apply_snapshot(fallback)
+            self._apply_snapshot(self._get_demo_snapshot())
 
-    # =========================
-    # HELPERS
-    # =========================
-    def _clear_layout(self, layout: QVBoxLayout) -> None:
-        """Entfernt alle Widgets aus einem Layout."""
+    def _clear_layout(self, layout: QVBoxLayout | QHBoxLayout | QGridLayout) -> None:
+        """Entfernt alle Inhalte aus einem Layout."""
         while layout.count():
             item = layout.takeAt(0)
             widget = item.widget()
@@ -642,7 +706,7 @@ class DashboardPage(QWidget):
                 self._clear_layout(child_layout)
 
     def _to_sparkline(self, values: list[int]) -> str:
-        """Erzeugt eine kleine Sparkline aus Zahlen."""
+        """Erzeugt eine einfache Sparkline aus Zahlenwerten."""
         if not values:
             return "–"
 
@@ -653,7 +717,7 @@ class DashboardPage(QWidget):
         if minimum == maximum:
             return bars[3] * len(values)
 
-        result = []
+        result: list[str] = []
         for value in values:
             normalized = (value - minimum) / (maximum - minimum)
             index = min(int(normalized * (len(bars) - 1)), len(bars) - 1)
@@ -661,19 +725,12 @@ class DashboardPage(QWidget):
 
         return "".join(result)
 
-    def _format_delta(self, values: list[int], invert_positive: bool = False) -> str:
-        """Formatiert Trend-Deltas."""
+    def _format_delta(self, values: list[int]) -> str:
+        """Formatiert die Veränderung eines Trends."""
         if len(values) < 2:
             return "±0"
 
         delta = values[-1] - values[0]
-
-        if invert_positive:
-            if delta < 0:
-                return f"Positiver Trend ({delta})"
-            if delta > 0:
-                return f"Negativer Trend (+{delta})"
-            return "Stabil"
 
         if delta > 0:
             return f"+{delta} Wachstum"

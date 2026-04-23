@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import (
     QAbstractItemView,
     QComboBox,
     QDialog,
+    QFormLayout,
     QFrame,
     QGridLayout,
     QHBoxLayout,
@@ -21,13 +22,17 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ui.widgets.stat_card import StatCard
+from src.ui.widgets.stat_card import StatCard
 
 
 @dataclass
 class EmployeeRecord:
+    """Speichert die aufbereiteten Daten eines Mitarbeiters."""
+
     employee_id: str
     full_name: str
+    first_name: str
+    last_name: str
     role: str
     department: str
     phone: str
@@ -36,11 +41,165 @@ class EmployeeRecord:
     hire_date: str
 
 
+class EmployeeDialog(QDialog):
+    """Dialog zum Erstellen oder Bearbeiten eines Mitarbeiters."""
+
+    ROLE_OPTIONS = ["Admin", "Trainer", "Empfang", "Lager", "Management", "Coach"]
+
+    def __init__(self, parent: QWidget | None = None, employee: EmployeeRecord | None = None) -> None:
+        """Initialisiert den Mitarbeiter-Dialog."""
+        super().__init__(parent)
+
+        self.employee = employee
+        self.is_edit_mode = employee is not None
+
+        self.setWindowTitle("Mitarbeiter bearbeiten" if self.is_edit_mode else "Neuer Mitarbeiter")
+        self.setMinimumWidth(520)
+        self.setModal(True)
+
+        self._create_ui()
+        self._fill_data_if_needed()
+
+    def _create_ui(self) -> None:
+        """Erstellt die Oberfläche des Dialogs."""
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(24, 24, 24, 24)
+        layout.setSpacing(16)
+
+        title = QLabel("Mitarbeiter bearbeiten" if self.is_edit_mode else "Neuen Mitarbeiter anlegen")
+        title.setObjectName("dashboardSectionTitle")
+
+        subtitle = QLabel("Mitarbeiterdaten erfassen und verwalten.")
+        subtitle.setObjectName("dashboardSectionSubtitle")
+        subtitle.setWordWrap(True)
+
+        form_card = QFrame()
+        form_card.setObjectName("dashboardBottomCard")
+
+        form = QFormLayout(form_card)
+        form.setContentsMargins(18, 18, 18, 18)
+        form.setSpacing(14)
+
+        self.employee_id_input = QLineEdit()
+        self.employee_id_input.setPlaceholderText("z. B. E-2001")
+
+        self.first_name_input = QLineEdit()
+        self.first_name_input.setPlaceholderText("Vorname")
+
+        self.last_name_input = QLineEdit()
+        self.last_name_input.setPlaceholderText("Nachname")
+
+        self.role_input = QComboBox()
+        self.role_input.addItems(self.ROLE_OPTIONS)
+
+        self.email_input = QLineEdit()
+        self.email_input.setPlaceholderText("E-Mail")
+
+        self.phone_input = QLineEdit()
+        self.phone_input.setPlaceholderText("Telefon")
+
+        form.addRow("Mitarbeiter-ID:", self.employee_id_input)
+        form.addRow("Vorname:", self.first_name_input)
+        form.addRow("Nachname:", self.last_name_input)
+        form.addRow("Rolle:", self.role_input)
+        form.addRow("E-Mail:", self.email_input)
+        form.addRow("Telefon:", self.phone_input)
+
+        button_row = QHBoxLayout()
+        button_row.addStretch()
+
+        cancel_button = QPushButton("Abbrechen")
+        cancel_button.setObjectName("secondaryButton")
+        cancel_button.clicked.connect(self.reject)
+
+        save_button = QPushButton("Speichern")
+        save_button.clicked.connect(self._validate_and_accept)
+
+        button_row.addWidget(cancel_button)
+        button_row.addWidget(save_button)
+
+        layout.addWidget(title)
+        layout.addWidget(subtitle)
+        layout.addWidget(form_card)
+        layout.addLayout(button_row)
+
+    def _fill_data_if_needed(self) -> None:
+        """Füllt den Dialog im Bearbeitungsmodus mit vorhandenen Daten."""
+        if self.employee is None:
+            return
+
+        self.employee_id_input.setText(self.employee.employee_id)
+        self.employee_id_input.setReadOnly(True)
+        self.first_name_input.setText(self.employee.first_name)
+        self.last_name_input.setText(self.employee.last_name)
+        self.email_input.setText(self.employee.email)
+        self.phone_input.setText(self.employee.phone)
+
+        index = self.role_input.findText(self.employee.role)
+        if index >= 0:
+            self.role_input.setCurrentIndex(index)
+
+    def _validate_and_accept(self) -> None:
+        """Prüft die Eingaben und bestätigt den Dialog."""
+        employee_id = self.employee_id_input.text().strip()
+        first_name = self.first_name_input.text().strip()
+        last_name = self.last_name_input.text().strip()
+        email = self.email_input.text().strip()
+        phone = self.phone_input.text().strip()
+
+        if not employee_id:
+            QMessageBox.warning(self, "Fehlende Eingabe", "Bitte eine Mitarbeiter-ID eingeben.")
+            return
+
+        if not first_name:
+            QMessageBox.warning(self, "Fehlende Eingabe", "Bitte einen Vornamen eingeben.")
+            return
+
+        if not last_name:
+            QMessageBox.warning(self, "Fehlende Eingabe", "Bitte einen Nachnamen eingeben.")
+            return
+
+        if not email:
+            QMessageBox.warning(self, "Fehlende Eingabe", "Bitte eine E-Mail eingeben.")
+            return
+
+        if "@" not in email or "." not in email:
+            QMessageBox.warning(self, "Ungültige E-Mail", "Bitte eine gültige E-Mail-Adresse eingeben.")
+            return
+
+        if not phone:
+            QMessageBox.warning(self, "Fehlende Eingabe", "Bitte eine Telefonnummer eingeben.")
+            return
+
+        self.accept()
+
+    def get_data(self) -> dict[str, str]:
+        """Gibt die eingegebenen Mitarbeiterdaten zurück."""
+        first_name = self.first_name_input.text().strip()
+        last_name = self.last_name_input.text().strip()
+        role = self.role_input.currentText()
+
+        return {
+            "employee_id": self.employee_id_input.text().strip(),
+            "first_name": first_name,
+            "last_name": last_name,
+            "full_name": f"{first_name} {last_name}".strip(),
+            "role": role,
+            "department": role,
+            "email": self.email_input.text().strip(),
+            "phone": self.phone_input.text().strip(),
+            "active": "true",
+            "status": "Aktiv",
+        }
+
+
 class EmployeesTableDialog(QDialog):
     """Große Tabellenansicht für Mitarbeiter."""
 
     def __init__(self, parent: QWidget | None = None, employees: list[EmployeeRecord] | None = None) -> None:
+        """Initialisiert den Tabellen-Dialog."""
         super().__init__(parent)
+
         self.employees = employees or []
 
         self.setWindowTitle("Mitarbeiterliste - vergrößerte Ansicht")
@@ -51,6 +210,7 @@ class EmployeesTableDialog(QDialog):
         self._populate_table()
 
     def _create_ui(self) -> None:
+        """Erstellt die Oberfläche der großen Tabellenansicht."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(18, 18, 18, 18)
         layout.setSpacing(12)
@@ -89,6 +249,7 @@ class EmployeesTableDialog(QDialog):
         layout.addLayout(button_row)
 
     def _populate_table(self) -> None:
+        """Füllt die Tabelle mit allen übergebenen Mitarbeitern."""
         self.table.setSortingEnabled(False)
         self.table.setRowCount(len(self.employees))
 
@@ -105,7 +266,7 @@ class EmployeesTableDialog(QDialog):
             ]
 
             for col, value in enumerate(values):
-                item = QTableWidgetItem(value)
+                item = QTableWidgetItem(str(value))
                 item.setTextAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
                 self.table.setItem(row, col, item)
 
@@ -114,7 +275,7 @@ class EmployeesTableDialog(QDialog):
 
 
 class EmployeesPage(QWidget):
-    """Professionelle Mitarbeiter-Verwaltungsseite mit großer Tabellenansicht."""
+    """Seite zur Verwaltung von Mitarbeitern mit Filter-, Tabellen- und Dialogfunktionen."""
 
     TABLE_COLUMNS = [
         "Mitarbeiter-ID",
@@ -128,16 +289,18 @@ class EmployeesPage(QWidget):
     ]
 
     def __init__(self, controller: Any | None = None) -> None:
+        """Initialisiert die Mitarbeiterseite."""
         super().__init__()
+
         self.controller = controller
         self.employees: list[EmployeeRecord] = []
         self.filtered_employees: list[EmployeeRecord] = []
 
         self._create_ui()
-        self._load_demo_data()
         self.refresh_data()
 
     def _create_ui(self) -> None:
+        """Erstellt die komplette Oberfläche der Seite."""
         root_layout = QVBoxLayout(self)
         root_layout.setContentsMargins(24, 24, 24, 24)
         root_layout.setSpacing(20)
@@ -147,6 +310,7 @@ class EmployeesPage(QWidget):
         self._create_table_section(root_layout)
 
     def _create_stats_section(self, layout: QVBoxLayout) -> None:
+        """Erstellt den Statistikbereich der Mitarbeiterseite."""
         stats_grid = QGridLayout()
         stats_grid.setHorizontalSpacing(18)
         stats_grid.setVerticalSpacing(18)
@@ -191,6 +355,7 @@ class EmployeesPage(QWidget):
         layout.addLayout(stats_grid)
 
     def _create_toolbar(self, layout: QVBoxLayout) -> None:
+        """Erstellt Suchfeld, Filter und Aktionsbuttons."""
         toolbar_card = QFrame()
         toolbar_card.setObjectName("dashboardBottomCard")
 
@@ -213,12 +378,12 @@ class EmployeesPage(QWidget):
 
         self.role_filter = QComboBox()
         self.role_filter.addItems(
-            ["Alle Rollen", "Admin", "Trainer", "Empfang", "Lager", "Management"]
+            ["Alle Rollen", "Admin", "Trainer", "Empfang", "Lager", "Management", "Coach"]
         )
         self.role_filter.currentTextChanged.connect(self.apply_filters)
 
         self.status_filter = QComboBox()
-        self.status_filter.addItems(["Alle Status", "Aktiv", "Inaktiv", "Urlaub"])
+        self.status_filter.addItems(["Alle Status", "Aktiv", "Inaktiv"])
         self.status_filter.currentTextChanged.connect(self.apply_filters)
 
         self.new_button = QPushButton("➕ Neuer Mitarbeiter")
@@ -228,7 +393,7 @@ class EmployeesPage(QWidget):
         self.edit_button.setObjectName("secondaryButton")
         self.edit_button.clicked.connect(self.edit_employee)
 
-        self.delete_button = QPushButton("🗑 Löschen")
+        self.delete_button = QPushButton("🗑 Deaktivieren")
         self.delete_button.setObjectName("secondaryButton")
         self.delete_button.clicked.connect(self.delete_employee)
 
@@ -251,6 +416,7 @@ class EmployeesPage(QWidget):
         layout.addWidget(toolbar_card)
 
     def _create_table_section(self, layout: QVBoxLayout) -> None:
+        """Erstellt die Tabellenansicht der Mitarbeiter."""
         card = QFrame()
         card.setObjectName("dashboardBottomCard")
 
@@ -281,23 +447,96 @@ class EmployeesPage(QWidget):
 
         layout.addWidget(card)
 
-    def _load_demo_data(self) -> None:
-        self.employees = [
-            EmployeeRecord("E-2001", "Markus Steiner", "Admin", "Verwaltung", "+43 660 111222", "markus.steiner@fit.at", "Aktiv", "12.01.2023"),
-            EmployeeRecord("E-2002", "Laura Hofer", "Trainer", "Training", "+43 676 123999", "laura.hofer@fit.at", "Aktiv", "04.03.2024"),
-            EmployeeRecord("E-2003", "Daniel Fuchs", "Empfang", "Service", "+43 664 555888", "daniel.fuchs@fit.at", "Aktiv", "17.05.2024"),
-            EmployeeRecord("E-2004", "Nina Bauer", "Lager", "Logistik", "+43 699 212121", "nina.bauer@fit.at", "Inaktiv", "09.07.2023"),
-            EmployeeRecord("E-2005", "Julian Kern", "Management", "Leitung", "+43 681 777444", "julian.kern@fit.at", "Aktiv", "01.11.2022"),
-            EmployeeRecord("E-2006", "Sabrina Wolf", "Trainer", "Training", "+43 680 818181", "sabrina.wolf@fit.at", "Urlaub", "13.09.2024"),
-            EmployeeRecord("E-2007", "Tobias Leitner", "Empfang", "Service", "+43 677 222666", "tobias.leitner@fit.at", "Aktiv", "22.10.2024"),
-            EmployeeRecord("E-2008", "Vanessa Moser", "Lager", "Logistik", "+43 650 444333", "vanessa.moser@fit.at", "Aktiv", "15.12.2024"),
-        ]
+    def _map_employee_to_record(self, employee: Any) -> EmployeeRecord:
+        """Wandelt ein Controller-Objekt in ein EmployeeRecord um."""
+        first_name = getattr(employee, "first_name", "") or ""
+        last_name = getattr(employee, "last_name", "") or ""
+        full_name = f"{first_name} {last_name}".strip()
+
+        if not full_name:
+            full_name = getattr(employee, "full_name", "") or getattr(employee, "name", "") or ""
+
+        active = getattr(employee, "active", False)
+        status = "Aktiv" if active else "Inaktiv"
+
+        explicit_status = getattr(employee, "status", None)
+        if explicit_status:
+            status_text = str(explicit_status).strip().lower()
+            if status_text in ("aktiv", "active", "1", "true"):
+                status = "Aktiv"
+            elif status_text in ("inaktiv", "inactive", "0", "false"):
+                status = "Inaktiv"
+
+        created_at = getattr(employee, "created_at", "") or getattr(employee, "hire_date", "")
+        hire_date = str(created_at) if created_at else ""
+
+        role = getattr(employee, "role", "") or ""
+        department = getattr(employee, "department", "") or role
+
+        return EmployeeRecord(
+            employee_id=getattr(employee, "employee_id", "") or "",
+            full_name=full_name,
+            first_name=first_name,
+            last_name=last_name,
+            role=role,
+            department=department,
+            phone=getattr(employee, "phone", "") or "",
+            email=getattr(employee, "email", "") or "",
+            status=status,
+            hire_date=hire_date,
+        )
+
+    def _call_controller_method(self, possible_names: list[str], *args: Any) -> Any:
+        """Ruft die erste passende Methode des Controllers auf."""
+        if self.controller is None:
+            raise RuntimeError("Kein Controller vorhanden.")
+
+        for method_name in possible_names:
+            method = getattr(self.controller, method_name, None)
+            if callable(method):
+                return method(*args)
+
+        raise AttributeError(
+            f"Keine passende Controller-Methode gefunden. Erwartet eine von: {', '.join(possible_names)}"
+        )
+
+    def _employee_id_exists(self, employee_id: str, exclude_id: str | None = None) -> bool:
+        """Prüft, ob eine Mitarbeiter-ID bereits existiert."""
+        normalized_id = employee_id.strip().lower()
+        excluded_id = exclude_id.strip().lower() if exclude_id else None
+
+        for employee in self.employees:
+            current_id = employee.employee_id.strip().lower()
+            if current_id == normalized_id and current_id != excluded_id:
+                return True
+
+        return False
 
     def refresh_data(self) -> None:
-        self.apply_filters()
-        self.update_stats()
+        """Lädt Mitarbeiterdaten neu und aktualisiert die Ansicht."""
+        try:
+            if self.controller is not None:
+                employees = self._call_controller_method(
+                    ["get_all_employees", "list_employees", "fetch_employees"]
+                )
+                self.employees = [self._map_employee_to_record(employee) for employee in employees]
+            else:
+                self.employees = []
+
+            self.apply_filters()
+        except Exception as error:
+            QMessageBox.critical(
+                self,
+                "Fehler",
+                f"Mitarbeiter konnten nicht geladen werden:\n{error}",
+            )
+            self.employees = []
+            self.filtered_employees = []
+            self.populate_table()
+            self.update_stats()
 
     def apply_filters(self) -> None:
+        """Filtert Mitarbeiter nach Suche, Rolle und Status."""
         search_text = self.search_input.text().strip().lower()
         selected_role = self.role_filter.currentText()
         selected_status = self.status_filter.currentText()
@@ -311,13 +550,8 @@ class EmployeesPage(QWidget):
                 or search_text in employee.employee_id.lower()
             )
 
-            matches_role = (
-                selected_role == "Alle Rollen" or employee.role == selected_role
-            )
-
-            matches_status = (
-                selected_status == "Alle Status" or employee.status == selected_status
-            )
+            matches_role = selected_role == "Alle Rollen" or employee.role == selected_role
+            matches_status = selected_status == "Alle Status" or employee.status == selected_status
 
             if matches_search and matches_role and matches_status:
                 result.append(employee)
@@ -327,8 +561,10 @@ class EmployeesPage(QWidget):
         self.update_stats()
 
     def populate_table(self) -> None:
+        """Füllt die Tabelle mit den gefilterten Mitarbeitern."""
         self.employee_table.setSortingEnabled(False)
         self.employee_table.setRowCount(len(self.filtered_employees))
+        self.employee_table.clearContents()
 
         for row, employee in enumerate(self.filtered_employees):
             values = [
@@ -343,7 +579,7 @@ class EmployeesPage(QWidget):
             ]
 
             for col, value in enumerate(values):
-                item = QTableWidgetItem(value)
+                item = QTableWidgetItem(str(value))
                 item.setTextAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
                 self.employee_table.setItem(row, col, item)
 
@@ -354,17 +590,19 @@ class EmployeesPage(QWidget):
             self.employee_table.selectRow(0)
 
     def update_stats(self) -> None:
-        total = len(self.filtered_employees)
-        active = sum(1 for employee in self.filtered_employees if employee.status == "Aktiv")
-        admins = sum(1 for employee in self.filtered_employees if employee.role == "Admin")
-        inactive = sum(1 for employee in self.filtered_employees if employee.status == "Inaktiv")
+        """Aktualisiert die Kennzahlenkarten."""
+        total_all = len(self.employees)
+        active = sum(1 for employee in self.employees if employee.status == "Aktiv")
+        admins = sum(1 for employee in self.employees if employee.role == "Admin")
+        inactive = sum(1 for employee in self.employees if employee.status == "Inaktiv")
 
-        self.total_card.set_value_animated(total)
+        self.total_card.set_value_animated(total_all)
         self.active_card.set_value_animated(active)
         self.admin_card.set_value_animated(admins)
         self.inactive_card.set_value_animated(inactive)
 
     def _get_selected_employee(self) -> EmployeeRecord | None:
+        """Gibt den aktuell ausgewählten Mitarbeiter zurück."""
         row = self.employee_table.currentRow()
         if row < 0:
             return None
@@ -381,29 +619,97 @@ class EmployeesPage(QWidget):
         return None
 
     def open_table_dialog(self) -> None:
+        """Öffnet die Tabelle in einer vergrößerten Ansicht."""
         dialog = EmployeesTableDialog(self, self.filtered_employees)
         dialog.exec()
 
     def create_employee(self) -> None:
-        QMessageBox.information(
-            self,
-            "Neuer Mitarbeiter",
-            "Hier kann später ein Dialog zum Erstellen eines neuen Mitarbeiters geöffnet werden.",
-        )
+        """Erstellt einen neuen Mitarbeiter."""
+        dialog = EmployeeDialog(self)
+
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+
+        data = dialog.get_data()
+
+        if self._employee_id_exists(data["employee_id"]):
+            QMessageBox.warning(
+                self,
+                "Doppelte Mitarbeiter-ID",
+                f"Die Mitarbeiter-ID '{data['employee_id']}' existiert bereits.",
+            )
+            return
+
+        try:
+            self._call_controller_method(
+                ["create_employee", "add_employee", "insert_employee"],
+                data["employee_id"],
+                data["first_name"],
+                data["last_name"],
+                data["role"],
+                data["email"],
+                data["phone"],
+            )
+            self.refresh_data()
+            QMessageBox.information(
+                self,
+                "Erfolg",
+                f"Mitarbeiter '{data['full_name']}' wurde erfolgreich angelegt.",
+            )
+        except Exception as error:
+            QMessageBox.critical(
+                self,
+                "Fehler",
+                f"Mitarbeiter konnte nicht erstellt werden:\n{error}",
+            )
 
     def edit_employee(self) -> None:
+        """Bearbeitet den ausgewählten Mitarbeiter."""
         employee = self._get_selected_employee()
         if employee is None:
             QMessageBox.warning(self, "Bearbeiten", "Bitte zuerst einen Mitarbeiter auswählen.")
             return
 
-        QMessageBox.information(
-            self,
-            "Mitarbeiter bearbeiten",
-            f"Bearbeitungsdialog für {employee.full_name} kann hier später geöffnet werden.",
-        )
+        dialog = EmployeeDialog(self, employee)
+
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+
+        data = dialog.get_data()
+
+        if self._employee_id_exists(data["employee_id"], exclude_id=employee.employee_id):
+            QMessageBox.warning(
+                self,
+                "Doppelte Mitarbeiter-ID",
+                f"Die Mitarbeiter-ID '{data['employee_id']}' existiert bereits.",
+            )
+            return
+
+        try:
+            self._call_controller_method(
+                ["update_employee", "edit_employee", "save_employee"],
+                data["employee_id"],
+                data["first_name"],
+                data["last_name"],
+                data["role"],
+                data["email"],
+                data["phone"],
+            )
+            self.refresh_data()
+            QMessageBox.information(
+                self,
+                "Erfolg",
+                f"Mitarbeiter '{data['full_name']}' wurde erfolgreich aktualisiert.",
+            )
+        except Exception as error:
+            QMessageBox.critical(
+                self,
+                "Fehler",
+                f"Mitarbeiter konnte nicht bearbeitet werden:\n{error}",
+            )
 
     def delete_employee(self) -> None:
+        """Deaktiviert den ausgewählten Mitarbeiter."""
         employee = self._get_selected_employee()
         if employee is None:
             QMessageBox.warning(self, "Löschen", "Bitte zuerst einen Mitarbeiter auswählen.")
@@ -411,14 +717,24 @@ class EmployeesPage(QWidget):
 
         answer = QMessageBox.question(
             self,
-            "Mitarbeiter löschen",
-            f"Möchtest du {employee.full_name} wirklich löschen?",
+            "Mitarbeiter deaktivieren",
+            f"Möchtest du {employee.full_name} wirklich deaktivieren?",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No,
         )
 
-        if answer == QMessageBox.StandardButton.Yes:
-            self.employees = [
-                emp for emp in self.employees if emp.employee_id != employee.employee_id
-            ]
-            self.apply_filters()
+        if answer != QMessageBox.StandardButton.Yes:
+            return
+
+        try:
+            self._call_controller_method(
+                ["deactivate_employee", "delete_employee", "remove_employee"],
+                employee.employee_id,
+            )
+            self.refresh_data()
+        except Exception as error:
+            QMessageBox.critical(
+                self,
+                "Fehler",
+                f"Mitarbeiter konnte nicht deaktiviert werden:\n{error}",
+            )
