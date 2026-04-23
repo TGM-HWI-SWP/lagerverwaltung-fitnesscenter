@@ -1,72 +1,194 @@
 [![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/Pc_A4vY0)
 [![Open in Visual Studio Code](https://classroom.github.com/assets/open-in-vscode-2e0aaae1b6195c2367325f4f02e2d04e9abb55f0b24a779b69b11b9e10269abc.svg)](https://classroom.github.com/online_ide?assignment_repo_id=22780668&assignment_repo_type=AssignmentRepo)
-# Lagerverwaltungssystem - Projektvorlage
 
-Vollständige Projektvorlage für ein professionelles Softwareentwicklungs- und Projektmanagement-Projekt. Dieses Projekt dient als Basis für die Entwicklung einer Lagerverwaltungs- oder Produktverwaltungssoftware mit professionellen Vorgaben.
+# Fitnesscenter Management System
+
+Vollständiges Softwareentwicklungsprojekt für die Verwaltung eines Fitnesscenters.  
+Das System basiert auf einer **Hexagonalen Architektur (Port-Adapter / Hexagonal Architecture)** und kombiniert:
+
+- Businesslogik
+- Datenbankanbindung über Supabase
+- moderne GUI mit PyQt6
+- strukturierte Dokumentation
+- Tests und Projektmanagement-Artefakte
+
 
 ## Projektüberblick
 
 - **Projektdauer:** 8 Wochen
 - **Unterricht:** 2 UE pro Woche
-- **Gruppengröße:** 3er- und 4er-Gruppen (Standard: 4er)
+- **Gruppengröße:** 3er Gruppe
 - **Ziel:** Professionelle Softwareentwicklung und Projektmanagement
+- **Projekttyp:** Softwareentwicklungs- und Projektmanagementprojekt
+- **Ziel:** Entwicklung eines modularen Fitnesscenter-Management-Systems
+- **Architektur:** Port-Adapter-Architektur (Hexagonal Architecture)
+- **GUI-Technologie:** PyQt6
+- **Persistenz:** Supabase
+- **Gruppengröße:** 3er-/4er-Gruppe
+
+---
+
+## Features
+
+Das System unterstützt aktuell folgende Kernbereiche:
+
+- **Mitgliederverwaltung**
+- **Mitarbeiterverwaltung**
+- **Produktverwaltung**
+- **Lager- und Bestandsverwaltung**
+- **Lagerbewegungen (IN / OUT)**
+- **Geräteverwaltung**
+- **Verkaufsautomaten (Vending Machines)**
+- **Reporting**
+- **Authentifizierung / Login**
+- **Dokumentation & Changelogs**
+
+---
 
 ## Projektstruktur
 
+```text
+LAGERVERWALTUNG-FITNESSCENTER/
+├── docs/
+│   ├── architecture.md
+│   ├── changelog_Ristic.md
+│   ├── changelog_strainovic.md
+│   ├── changelog_template_vitorovic.md
+│   ├── changelog_template.md
+│   ├── contracts.md
+│   ├── DATACLASS_ERKLAERT.md
+│   ├── known_issues.md
+│   ├── retrospective.md
+│   └── tests.md
+│
+├── src/
+│   ├── adapters/
+│   │   ├── __init__.py
+│   │   ├── report.py
+│   │   ├── repository.py
+│   │   └── supabase_repository.py
+│   │
+│   ├── controllers/
+│   │   ├── __init__.py
+│   │   ├── employee_controller.py
+│   │   ├── equipment_controller.py
+│   │   ├── member_controller.py
+│   │   ├── movement_controller.py
+│   │   ├── product_controller.py
+│   │   ├── report_controller.py
+│   │   └── vending_machine_controller.py
+│   │
+│   ├── domain/
+│   │   ├── __init__.py
+│   │   ├── employee.py
+│   │   ├── equipment.py
+│   │   ├── member.py
+│   │   ├── product.py
+│   │   ├── vending_machine.py
+│   │   └── warehouse.py
+│   │
+│   ├── ports/
+│   │   ├── __init__.py
+│   │   ├── checkin_repository_port.py
+│   │   ├── employee_repository_port.py
+│   │   ├── equipment_repository_port.py
+│   │   ├── member_repository_port.py
+│   │   ├── membership_repository_port.py
+│   │   ├── movement_repository_port.py
+│   │   ├── product_repository_port.py
+│   │   ├── report_port.py
+│   │   └── vending_machine_repository_port.py
+│   │
+│   ├── reports/
+│   │   └── __init__.py
+│   │
+│   ├── services/
+│   │   └── __init__.py
+│   │
+│   ├── ui/
+│   │   ├── auth/
+│   │   │   ├── __init__.py
+│   │   │   ├── auth_service.py
+│   │   │   ├── login_window.py
+│   │   │   ├── session.json
+│   │   │   └── users.json
+│   │   │
+│   │   ├── dialogs/
+│   │   ├── pages/
+│   │   │   ├── dashboard_page.py
+│   │   │   ├── employees_page.py
+│   │   │   ├── equipment_page.py
+│   │   │   ├── members_page.py
+│   │   │   ├── movements_page.py
+│   │   │   ├── products_page.py
+│   │   │   ├── reports_page.py
+│   │   │   └── vending_page.py
+│   │   │
+│   │   ├── styles/
+│   │   │   ├── auth.qss
+│   │   │   └── main.qss
+│   │   │
+│   │   ├── tables/
+│   │   │   └── inventory_table.py
+│   │   │
+│   │   ├── widgets/
+│   │   │   ├── animated_stack.py
+│   │   │   ├── sidebar.py
+│   │   │   └── stat_card.py
+│   │   │
+│   │   ├── __init__.py
+│   │   └── main_window.py
+│   │
+│   ├── __init__.py
+│   └── main.py
+│
+├── tests/
+│   ├── integration/
+│   │   └── test_integration.py
+│   ├── unit/
+│   │   └── test_domain.py
+│   ├── conftest.py
+│   └── test_product.py
+│
+├── .env
+├── .flake8
+├── .gitignore
+├── .pylintrc
+├── CHECKLISTE.md
+├── GIT_WORKFLOW.md
+├── INDEX.md
+├── pyproject.toml
+├── README.md
+├── report_supabase.py
+├── TEMPLATE_INFO.md
+├── test_inventory_report.py
+├── test_member.py
+└── test_supabase.py
 ```
-projekt/
-├── src/                          # Quellcode
-│   ├── domain/                   # Domain-Modelle
-│   │   ├── product.py            # Produktklasse
-│   │   └── warehouse.py          # Lagerverwaltung
-│   ├── ports/                    # Schnittstellen (Abstraktion)
-│   │   └── __init__.py          # Repository- und Report-Ports
-│   ├── adapters/                 # Adapter (konkrete Implementierungen)
-│   │   ├── repository.py         # In-Memory und persistente Adapter
-│   │   └── report.py             # Report-Adapter
-│   ├── services/                 # Business Logic
-│   │   └── __init__.py          # WarehouseService
-│   ├── ui/                       # Benutzeroberfläche (PyQt6)
-│   │   └── __init__.py          # GUI-Hauptfenster
-│   └── reports/                  # Report-Generierung
-├── tests/                        # Tests
-│   ├── unit/                     # Unit Tests
-│   │   └── test_domain.py       # Tests für Domain-Modelle
-│   ├── integration/              # Integration Tests
-│   │   └── test_integration.py  # Integrationstest
-│   └── conftest.py              # Pytest-Konfiguration
-├── docs/                         # Dokumentation
-│   ├── contracts.md              # Schnittstellen-Dokumentation
-│   ├── architecture.md           # Architektur-Dokumentation
-│   ├── tests.md                  # Test-Dokumentation
-│   ├── retrospective.md          # Retrospektive
-│   └── changelog_<name>.md      # Persönliche Changelog pro Mitglied
-├── data/                         # Datenspeicherung
-├── pyproject.toml                # Python-Projektdefinition & Dependencies
-└── README.md                     # Projekt-Dokumentation
-
-```
+---
 
 ## Installation & Setup
 
 ### Voraussetzungen
-- Python 3.10+
-- pip oder Poetry
+- Python 3.10 oder höher
+- pip
+- Git
+- Supabase-Projekt mit gültigen Zugangsdaten
 
 ### Entwicklungsumgebung aufbauen
 
 ```bash
 # 1. Repository klonen
 git clone <repository-url>
-cd projekt
+cd lagerverwaltung-fitnesscenter
 
-# 2. Virtuelle Umgebung erstellen (optional, aber empfohlen)
-python -m venv venv
+# 2. Virtuelle Umgebung erstellen
+python -m venv .venv
 
-# Windows:
-venv\Scripts\activate
-# Linux/Mac:
-source venv/bin/activate
+# Windows
+.venv\Scripts\activate
+# Linux / Mac
+source .venv/bin/activate
 
 # 3. Dependencies installieren
 pip install -e .
@@ -75,61 +197,97 @@ pip install -e ".[dev]"
 # 4. Tests ausführen
 pytest
 
-# 5. GUI starten
-python -m src.ui
+# 5. Environment Variablen
+Für die Supabase-Anbindung wird eine `.env` Datei benötigt.
+
+Beispiel:
+SUPABASE_URL=deine_supabase_url
+SUPABASE_KEY=dein_supabase_key
+
+Ohne diese Werte kann die Anwendung mit Supabase-Repositories nicht korrekt starten.
+
+# 6. GUI starten
+python -m src.main
 ```
+---
 
 ## Architektur
 
+UI → Controller → Service → Repository Port → Repository Adapter → Datenbank
 Das Projekt folgt der **Port-Adapter-Architektur** (auch Hexagonal Architecture genannt):
 
-- **Domain Layer:** Geschäftslogik und Entities (unabhängig von technischen Details)
-- **Ports:** Schnittstellen für externe Abhängigkeiten (abstrakt)
-- **Adapters:** Konkrete Implementierungen (z.B. In-Memory Repository, Dateisystem, Datenbank)
-- **Services:** Geschäftsvorgänge und Use Cases
-- **UI:** Benutzeroberfläche
 
-Diese Architektur ermöglicht:
-- **Testbarkeit:** Mock-Implementierungen können einfach bereitgestellt werden
-- **Austauschbarkeit:** Adapters können leicht ausgetauscht werden
-- **Wartbarkeit:** Klare Trennung der Concerns
+### Schichten im Überblick
 
-## Rollenvergabe (4er-Gruppe)
+- **Domain Layer:**  
+  Enthält die fachlichen Kernobjekte wie `Member`, `Employee`, `Product`, `Equipment`, `VendingMachine` und `Movement`.
 
-### Rolle 1: Projektverantwortung & Schnittstellen (Contract Owner)
-- Projektkoordination & Kommunikation
-- Zentrale Verantwortung für alle Schnittstellen
-- Dokumentation: `docs/contracts.md`
-- Release- & Versionsverantwortung
-- Unterstützung bei Mergekonflikten
+- **Ports:**  
+  Definieren Schnittstellen für Datenzugriffe und Reports.
 
-### Rolle 2: Businesslogik & Report A
-- Implementierung der Kern-Use-Cases
-- Umsetzung von Report A (z.B. Lagerstandsreport)
-- Zugehörige Tests
-- Beispiel: Lagerbewirtschaftung, Bestandsverwaltung
+- **Adapters:**  
+  Implementieren die Ports konkret, z. B.:
+  - In-Memory-Repositories  
+  - Supabase-Repositories  
+  - Report-Adapter  
 
-### Rolle 3: Report B & Qualität
-- Umsetzung von Report B (z.B. Bewegungsprotokoll, Statistik)
-- Erweiterte Tests (Rand- & Fehlerfälle)
-- Dummy-Daten erstellen
-- Test-Coverage erhöhen
+- **Services:**  
+  Enthalten die Businesslogik und Use Cases des Systems.
 
-### Rolle 4: GUI & Interaktion
-- Konzeption & Umsetzung der GUI
-- Anbindung an die Businesslogik
-- GUI-Tests oder Testbeschreibung
+- **Controllers:**  
+  Vermitteln zwischen GUI und Service Layer.
+
+- **UI:**  
+  PyQt6-basierte Oberfläche mit Pages, Dialogen, Widgets und Stylesheets.
+
+### Vorteile dieser Architektur
+
+- **Testbarkeit:**  
+  Klare Trennung der Verantwortlichkeiten ermöglicht einfaches Testen
+
+- **Austauschbarkeit:**  
+  Datenquellen können leicht ersetzt werden (z. B. In-Memory ↔ Datenbank)
+
+- **Wartbarkeit:**  
+  Gute Struktur erleichtert Erweiterung und Pflege
+
+---
+
+## Rollenvergabe (3er-Gruppe)
+
+### Rolle 1 – Projektverantwortung & Schnittstellen (Contract Owner)
+- Projektkoordination  
+- Definition und Pflege der Schnittstellen  
+- Architektur und Dokumentation  
+- Unterstützung bei Mergekonflikten  
+- Domain-Modelle und Controller  
+
+### Rolle 2 – Businesslogik & Persistenz
+- Service Layer  
+- Datenbankanbindung  
+- Repository-Implementierungen  
+- Report-Logik  
+
+### Rolle 3 / 4 – GUI & Interaktion
+- Aufbau der Benutzeroberfläche  
+- Dialoge, Tabellen und Navigation  
+- Styling mit QSS  
+- Anbindung an Controller und Service  
+
+---
 
 ## Entwicklungsablauf
 
 ### Versionsmeilensteine
-
-- **v0.1** – Projektstart, Rollen, erste Contracts
-- **v0.2** – Architektur & Walking Skeleton
-- **v0.3** – Kernlogik & GUI-Minimum
-- **v0.4** – erste Reports
-- **v0.5** – Tests & Stabilisierung
-- **v1.0** – fertige, stabile Version
+- **v0.1** – Projektstart, Rollen, erste Contracts  
+- **v0.2** – Architektur & Walking Skeleton  
+- **v0.3** – Kernstrukturen & Domain  
+- **v0.4** – Erweiterung Domain / Ports / Architektur  
+- **v0.5** – Architektur-Anpassung auf Fitnesscenter  
+- **v0.6** – erste Controller  
+- **v0.7** – zusätzliche Controller  
+- **v0.8** – Controller-/Service-Integration  
+- **v0.9** – finale Backend-Vorbereitung für GUI-Anbindung  
 
 ### Git-Workflow
 
@@ -137,20 +295,21 @@ Diese Architektur ermöglicht:
 # Feature-Branch erstellen
 git checkout -b feature/<rollenname>/<feature>
 
-# Commits mit aussagekräftigen Meldungen
+# Änderungen committen
 git commit -m "Feat: Beschreibung"
 git commit -m "Fix: Bugfix-Beschreibung"
 git commit -m "Docs: Dokumentation"
 git commit -m "Test: Testcode"
 
-# Merge mit Dokumentation
-git push origin feature/...
+# Branch pushen
+git push origin feature/<rollenname>/<feature>
 # Pull Request erstellen → Review → Merge
 ```
 
 ### Dokumentation der Versionen
 
 Jedes Gruppen mitglied führt: `docs/changelog_<name>.md`
+Bsp.: docs/changelog_strainovic.md
 
 Beispiel-Format:
 ```markdown
@@ -169,7 +328,15 @@ Beispiel-Format:
 - def5678 Test: Product Tests
 ```
 
+---
+
 ## Testing
+
+### Alle Tests
+
+```bash
+pytest
+```
 
 ### Unit Tests ausführen
 
@@ -188,34 +355,78 @@ pytest tests/integration/ -v
 ```bash
 pytest --cov=src tests/
 ```
+---
 
 ## Reports
 
-Reports sind eigenständige Komponenten, die:
-- Auf gespeicherten Daten basieren
-- Deterministisch und testbar sind
-- Verschiedene Ausgabeformen unterstützen (Text, Tabelle, Grafik)
+Aktuell ist insbesondere ein Inventory Report vorgesehen.
 
-Beispiel Report A (Lagerbestandsbericht):
+Reports sollen:
+- auf echten Daten basieren
+- deterministisch sein
+- testbar bleiben
+- unabhängig von der GUI funktionieren
+
+Beispielhafte Nutzung:
+
+### Produkt erstellen:
+```python
+from src.services import FitnessCenterService
+
+product = service.create_product(
+    product_id="P001",
+    name="Protein Shake",
+    description="Getränk für Fitnessstudio",
+    price=4.99,
+    category="Getränke",
+    initial_quantity=10,
+)
 ```
-===============================================================
-LAGERBESTANDSBERICHT
-===============================================================
 
-ID: LAPTOP-001
-  Name: ProBook Laptop
-  Kategorie: Elektronik
-  Bestand: 6
-  Preis: 1200.00 €
-  Gesamtwert: 7200.00 €
-
-Total: 7800.00 €
-===============================================================
+### Bestand erhöhen:
+```python
+service.add_stock("P001", 5, reason="Neue Lieferung", user="system")
 ```
+
+### Bestand verringern:
+```python
+service.remove_stock("P001", 2, reason="Verkauf", user="system")
+```
+
+### Inventory Report erzeugen:
+```python
+report = service.generate_inventory_report()
+print(report)
+```
+
+---
+
+## Bekannte Punkte / aktueller Stand
+
+Der Projektstand ist weit fortgeschritten, jedoch noch nicht in allen Bereichen final integriert.
+
+### Aktuell fertig / weitgehend fertig
+- Domain-Modelle
+- Ports
+- Service Layer
+- Repository Adapter
+- Controller Layer
+- die GUI-Struktur
+- vollständige GUI-Anbindung an Controller und Service
+- Bereinigung verbleibender Demo-Daten in einzelnen UI-Seiten
+- finale End-to-End-Tests
+
+#### Weitere Hinweise siehe:
+
+- docs/known_issues.md
+- docs/tests.md
+- docs/retrospective.md
+
+---
 
 ## Projektmanagement-Dokumente
 
-Die folgenden PM-Dokumente sind als Word/Markdown zu erstellen:
+### Im separaten PDF befinden sich unter anderem:
 
 1. **Projektcharta**
    - Ziel & Nicht-Ziele
@@ -235,7 +446,21 @@ Die folgenden PM-Dokumente sind als Word/Markdown zu erstellen:
 5. **Rollenverteilung**
    - Aufgaben pro Rolle
 
-**Speichern unter:** `docs/projektmanagement.md` oder als separate PDF
+
+### Im Ordner docs/ befinden sich unter anderem:
+- Architektur-Dokumentation
+- Contracts
+- Tests-Dokumentation
+- Retrospektive
+- persönliche Changelogs
+
+Zusätzliche Projektübersichten:
+
+- CHECKLISTE.md
+- GIT_WORKFLOW.md
+- INDEX.md
+
+---
 
 ## Versionierung
 
@@ -251,46 +476,20 @@ git tag -a v0.1 -m "v0.1 - Projektstart"
 git push origin v0.1
 ```
 
-## Häufige Aufgaben
-
-### Neues Produkt hinzufügen
-```python
-from src.services import WarehouseService
-from src.adapters.repository import RepositoryFactory
-
-repository = RepositoryFactory.create_repository("memory")
-service = WarehouseService(repository)
-
-product = service.create_product(
-    product_id="P001",
-    name="Laptop",
-    description="High-End Laptop",
-    price=1200.0,
-    category="Elektronik",
-    initial_quantity=5
-)
-```
-
-### Bestand aktualisieren
-```python
-service.add_to_stock("P001", 3, reason="Neuer Einkauf", user="Max Mustermann")
-service.remove_from_stock("P001", 2, reason="Verkauf", user="Anna Schmidt")
-```
-
-### Lagerbestandswert berechnen
-```python
-total_value = service.get_total_inventory_value()
-print(f"Gesamtwert: {total_value:.2f} €")
-```
+---
 
 ## Known Issues
 
 Siehe `docs/known_issues.md`
 
+---
+
 ## Lizenz
 
 Schulprojekt - TGM
 
+---
+
 ## Kontakt
 
-Projektverantwortung: [Rolle 1 Person]
+Projektverantwortung: Ivan Strainovic - Rolle 1 (Contract Owner)

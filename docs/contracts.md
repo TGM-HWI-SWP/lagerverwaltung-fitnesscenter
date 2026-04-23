@@ -2,12 +2,13 @@
 
 ## Übersicht
 
-Diese Datei dokumentiert die zentralen Schnittstellen des Projekts **Fitnesscenter**.  
+Diese Datei dokumentiert die zentralen Schnittstellen des Projekts **Fitnesscenter Management System**.  
 Sie wird von **Rolle 1 (Contract Owner)** gepflegt und bei Änderungen an Architektur, Services, Repositories oder Reports aktualisiert.
 
 Die Contracts definieren, wie die einzelnen Komponenten miteinander kommunizieren:
 
 - GUI
+- Controller
 - Businesslogik
 - Datenpersistenz
 - Reports
@@ -21,12 +22,21 @@ Die Contracts definieren, wie die einzelnen Komponenten miteinander kommuniziere
 Repräsentiert ein Produkt im Fitnesscenter (z. B. Snacks, Getränke, Zubehör).
 
 **Attribute:**
-- `product_id: str` - Eindeutige Produkt-ID
+- `id: str` - Eindeutige Produkt-ID
 - `name: str` - Produktname
 - `description: str` - Beschreibung
 - `price: float` - Preis pro Einheit
 - `quantity: int` - Lagerbestand
-- `category: str` - Kategorie (Snack, Getränk, Zubehör)
+- `sku: str` - Lager-/Artikelnummer
+- `category: str` - Kategorie
+- `created_at: datetime`
+- `updated_at: datetime`
+- `notes: str | None`
+
+**Methoden:**
+- `update_quantity(amount: int) -> None`
+- `get_total_value() -> float`
+- `is_low_stock() -> bool`
 
 ---
 
@@ -35,11 +45,13 @@ Repräsentiert ein Produkt im Fitnesscenter (z. B. Snacks, Getränke, Zubehör).
 Repräsentiert eine Lagerbewegung eines Produkts.
 
 **Attribute:**
-- `movement_id: str`
+- `id: str`
 - `product_id: str`
+- `product_name: str`
 - `quantity_change: int`
-- `movement_type: str` - IN / OUT / CORRECTION
-- `timestamp: str`
+- `movement_type: str` - z. B. `IN`, `OUT`, `CORRECTION`
+- `reason: str | None`
+- `timestamp: datetime`
 - `performed_by: str`
 
 ---
@@ -209,6 +221,7 @@ Service-Klasse für die zentrale Businesslogik.
 - `create_member(member_id: str, first_name: str, last_name: str, email: str, phone: str = "", membership_type: str = "Standard") -> Member`
 - `get_member(member_id: str) -> Member | None`
 - `get_all_members() -> list[Member]`
+- `update_member(member_id: str, first_name: str, last_name: str, email: str, phone: str = "", membership_type: str = "Standard") -> Member`
 - `deactivate_member(member_id: str) -> None`
 - `activate_member(member_id: str) -> None`
 
@@ -219,6 +232,7 @@ Service-Klasse für die zentrale Businesslogik.
 - `create_employee(employee_id: str, first_name: str, last_name: str, role: str, email: str, phone: str = "") -> Employee`
 - `get_employee(employee_id: str) -> Employee | None`
 - `get_all_employees() -> list[Employee]`
+- `update_employee(employee_id: str, first_name: str, last_name: str, role: str, email: str, phone: str = "") -> Employee`
 - `deactivate_employee(employee_id: str) -> None`
 - `activate_employee(employee_id: str) -> None`
 
@@ -226,18 +240,20 @@ Service-Klasse für die zentrale Businesslogik.
 
 ### Product Management
 
-- `create_product(product_id: str, name: str, description: str, price: float, quantity: int, category: str) -> Product`
+- `create_product(product_id: str, name: str, description: str, price: float, category: str = "", initial_quantity: int = 0, sku: str = "", notes: str | None = None) -> Product`
 - `get_product(product_id: str) -> Product | None`
 - `get_all_products() -> list[Product]`
-- `add_stock(product_id: str, quantity: int, performed_by: str) -> None`
-- `remove_stock(product_id: str, quantity: int, performed_by: str) -> None`
+- `update_product(product_id: str, name: str, description: str, price: float, category: str = "", sku: str = "", notes: str | None = None) -> Product`
 - `delete_product(product_id: str) -> None`
+- `add_stock(product_id: str, quantity: int, reason: str = "", user: str = "system") -> None`
+- `remove_stock(product_id: str, quantity: int, reason: str = "", user: str = "system") -> None`
+- `get_total_inventory_value() -> float`
 
 ---
 
 ### Equipment Management
 
-- `create_equipment(equipment_id: str, name: str, equipment_type: str, location: str, status: str = "available") -> Equipment`
+- `create_equipment(equipment_id: str, name: str, equipment_type: str, location: str, status: str = "available", assigned_employee_id: str = "") -> Equipment`
 - `get_equipment(equipment_id: str) -> Equipment | None`
 - `get_all_equipment() -> list[Equipment]`
 - `update_equipment_status(equipment_id: str, status: str) -> None`
@@ -248,7 +264,7 @@ Service-Klasse für die zentrale Businesslogik.
 
 ### Vending Machine Management
 
-- `create_machine(machine_id: str, location: str, machine_type: str) -> VendingMachine`
+- `create_machine(machine_id: str, location: str, machine_type: str, assigned_employee_id: str = "") -> VendingMachine`
 - `get_machine(machine_id: str) -> VendingMachine | None`
 - `get_all_machines() -> list[VendingMachine]`
 - `assign_employee_to_machine(machine_id: str, employee_id: str) -> None`
@@ -264,36 +280,37 @@ Service-Klasse für die zentrale Businesslogik.
 
 ---
 
-## 4. ReportPort
+### Report Management
 
-Port für Report-Generierung.
-
-### Methoden
-
-#### `generate_inventory_report() -> list[dict]`
-
-Generiert eine Übersicht aller Produkte und deren Bestand.
-
-**Beispiel-Ausgabe:**
-- `product_id`
-- `name`
-- `quantity`
-- `price`
-- `category`
+- `generate_inventory_report() -> str`
 
 ---
 
-#### `generate_equipment_status_report() -> list[dict]`
+## 4. ReportPort / Report-Adapter
 
-Generiert eine Übersicht über den Status aller Fitnessgeräte.
+Die Report-Logik erzeugt derzeit einen textbasierten Lager-/Inventarbericht.
 
-**Beispiel-Ausgabe:**
-- `equipment_id`
-- `name`
-- `equipment_type`
-- `status`
-- `location`
-- `assigned_employee_id`
+### Unterstützte Reports
+
+#### `generate_inventory_report() -> str`
+
+Generiert eine textbasierte Übersicht über:
+- Produkte
+- Bestände
+- Lagerwert
+- kritische Bestände
+- Bewegungsdaten
+
+**Rückgabeformat:**  
+- `str`
+
+**Beispielhafte Inhalte:**
+- Produkt-ID
+- Name
+- Bestand
+- Preis
+- Gesamtwert
+- Anzahl kritischer Produkte
 
 ---
 
@@ -301,18 +318,22 @@ Generiert eine Übersicht über den Status aller Fitnessgeräte.
 
 Die grafische Benutzeroberfläche (GUI) greift nicht direkt auf die Datenbank zu.
 
-Die GUI kommuniziert ausschließlich über die Businesslogik.
+Die GUI kommuniziert über:
+- Controller
+- Service Layer
 
 **Verwendete Komponenten:**
 - `FitnessCenterService`
-- `ReportPort`
+- Controller-Schicht (`member_controller`, `product_controller`, usw.)
+- Report-Logik
 
 **Typische GUI-Funktionen:**
 - Produkte anzeigen
-- Produkte zum Lager hinzufügen oder entfernen
-- Mitglieder anzeigen
+- Produkte anlegen, bearbeiten, löschen
+- Lagerbestand erhöhen oder verringern
+- Mitglieder anzeigen und verwalten
 - Mitarbeiter verwalten
-- Geräte anzeigen
+- Geräte anzeigen und zuweisen
 - Automaten verwalten
 - Reports anzeigen
 
@@ -328,10 +349,11 @@ Dadurch bleibt die Anwendung:
 
 Die Kommunikation zwischen den Komponenten erfolgt nach folgendem Prinzip:
 
-`GUI -> Service -> Repository -> Datenbank`
+`GUI -> Controller -> Service -> RepositoryPort -> RepositoryAdapter -> Datenbank`
 
 **Zusätzliche Regeln:**
 - Die GUI enthält keine direkte Datenbanklogik.
+- Die Controller enthalten keine Businesslogik.
 - Die Businesslogik greift nur über RepositoryPorts auf Daten zu.
 - Persistenzadapter können ausgetauscht werden, ohne die Businesslogik zu verändern.
 - Reports basieren auf gespeicherten Daten aus den Repositories.
@@ -340,7 +362,17 @@ Die Kommunikation zwischen den Komponenten erfolgt nach folgendem Prinzip:
 
 ## Versionshistorie der Contracts
 
-### v0.3
+### v0.9
+- Ergänzung der Update-Methoden bei Member, Employee und Product
+- Ergänzung der Delete-Methoden bei Product, Equipment und VendingMachine
+- Service-Schnittstellen final an aktuellen Code angepasst
+- Report-Rückgabeformat auf `str` präzisiert
+
+### v0.8
+- Controller-/Service-Integration vorbereitet
+- Abgleich mit aktueller GUI-Anbindung
+
+### v0.5
 - Abgleich der Contracts mit den aktuellen Domain-Modellen
 - Ergänzung von `email`, `phone`, `membership_type` und `created_at` bei `Member`
 - Ergänzung von `email`, `phone` und `created_at` bei `Employee`
@@ -358,7 +390,7 @@ Die Kommunikation zwischen den Komponenten erfolgt nach folgendem Prinzip:
   - VendingMachine
 - Anpassung der RepositoryPorts
 - Erweiterung des FitnessCenterService
-- Definition der ReportPorts für Lager und Geräte
+- Definition der Report-Ports für Lager und Geräte
 
 ### v0.1
 - Erste Version der Contracts-Struktur
