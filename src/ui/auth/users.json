@@ -151,5 +151,16 @@
         "created_at": "2026-04-23 21:26:21",
         "last_login": "2026-04-23 21:26:27",
         "is_active": true
+    },
+    {
+        "username": "TEST321",
+        "password": "7a2838d37597a6e9e8df556d3247b2ef61d1d78f9f0508ed840542f5b558e81f",
+        "first_name": "TEST321",
+        "last_name": "",
+        "role": "Mitarbeiter",
+        "employee_id": "TEST321",
+        "created_at": "2026-04-24 19:34:07",
+        "last_login": "2026-04-24 19:34:16",
+        "is_active": true
     }
 ]
