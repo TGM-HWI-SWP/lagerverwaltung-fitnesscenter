@@ -1,5 +1,14 @@
-# Report A Test für den Lagerbestand
-# Dieser Test erstellt Produkte, fügt Lagerbestand hinzu und generiert einen Bericht über den aktuellen Lagerbestand.
+"""Report A Test - Lagerbestandsbericht mit In-Memory Daten
+
+Dieses Script dient als Test und Demo für den Lagerbestandsbericht (Report A).
+Es verwendet In-Memory-Repositories, um unabhängig von einer Datenbank
+Testdaten zu erstellen und den Bericht zu generieren.
+
+Ablauf:
+- Erstellung von Testprodukten
+- Durchführung von Lagerbewegungen
+- Generierung und Ausgabe des Inventory Reports
+"""
 
 from src.adapters.report import ConsoleReportAdapter
 from src.adapters.repository import (
@@ -14,6 +23,12 @@ from src.services import FitnessCenterService
 
 
 def main():
+    """Führt den Test für den Lagerbestandsbericht aus.
+
+    Initialisiert alle benötigten In-Memory-Repositories,
+    erstellt Testdaten und gibt den generierten Report aus.
+    """
+
     # Repositories erstellen
     product_repo = InMemoryProductRepository()
     movement_repo = InMemoryMovementRepository()

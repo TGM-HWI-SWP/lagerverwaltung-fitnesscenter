@@ -1,5 +1,6 @@
 """Services - Business Logic Layer"""
 
+
 from datetime import datetime
 from typing import List, Optional
 
@@ -19,7 +20,12 @@ from ..adapters.report import ConsoleReportAdapter
 
 
 class FitnessCenterService:
-    """Zentrale Business-Logic für das Fitnesscenter"""
+    """
+    Zentrale Business-Logik des Fitnesscenters.
+
+    Koordiniert alle Operationen zwischen Domain-Objekten,
+    Repositories und Report-Adaptern.
+    """
 
     def __init__(
         self,
@@ -31,6 +37,7 @@ class FitnessCenterService:
         vending_machine_repository: VendingMachineRepositoryPort,
         report_adapter: ConsoleReportAdapter
     ):
+        """Initialisiert den Service mit allen benötigten Repositories."""
         self.product_repository = product_repository
         self.movement_repository = movement_repository
         self.member_repository = member_repository
@@ -49,6 +56,7 @@ class FitnessCenterService:
         phone: str = "",
         membership_type: str = "Standard",
     ) -> Member:
+        """Erstellt ein neues Mitglied."""
         existing_member = self.member_repository.load_member(member_id)
         if existing_member:
             raise ValueError(f"Mitglied mit ID {member_id} existiert bereits")
@@ -66,9 +74,11 @@ class FitnessCenterService:
         return member
 
     def get_member(self, member_id: str) -> Optional[Member]:
+        """Lädt ein Mitglied."""
         return self.member_repository.load_member(member_id)
 
     def get_all_members(self) -> List[Member]:
+        """Gibt alle Mitglieder zurück."""
         return self.member_repository.load_all_members()
 
     def update_member(
@@ -80,6 +90,7 @@ class FitnessCenterService:
         phone: str = "",
         membership_type: str = "Standard",
     ) -> Member:
+        """Aktualisiert ein bestehendes Mitglied."""
         member = self.member_repository.load_member(member_id)
 
         if not member:
@@ -95,6 +106,7 @@ class FitnessCenterService:
         return member
 
     def deactivate_member(self, member_id: str) -> None:
+        """Deaktiviert ein Mitglied."""
         member = self.member_repository.load_member(member_id)
 
         if not member:
@@ -104,6 +116,7 @@ class FitnessCenterService:
         self.member_repository.save_member(member)
 
     def activate_member(self, member_id: str) -> None:
+        """Aktiviert ein Mitglied."""
         member = self.member_repository.load_member(member_id)
 
         if not member:
@@ -121,6 +134,7 @@ class FitnessCenterService:
         email: str,
         phone: str = "",
     ) -> Employee:
+        """Erstellt einen neuen Mitarbeiter."""
         existing_employee = self.employee_repository.load_employee(employee_id)
         if existing_employee:
             raise ValueError(f"Mitarbeiter mit ID {employee_id} existiert bereits")
@@ -138,9 +152,11 @@ class FitnessCenterService:
         return employee
 
     def get_employee(self, employee_id: str) -> Optional[Employee]:
+        """Lädt einen Mitarbeiter."""
         return self.employee_repository.load_employee(employee_id)
 
     def get_all_employees(self) -> List[Employee]:
+        """Gibt alle Mitarbeiter zurück."""
         return self.employee_repository.load_all_employees()
     
     def update_employee(
@@ -152,6 +168,7 @@ class FitnessCenterService:
         email: str,
         phone: str = "",
     ) -> Employee:
+        """Aktualisiert einen Mitarbeiter."""
         employee = self.employee_repository.load_employee(employee_id)
 
         if not employee:
@@ -167,6 +184,7 @@ class FitnessCenterService:
         return employee
 
     def deactivate_employee(self, employee_id: str) -> None:
+        """Deaktiviert einen Mitarbeiter."""
         employee = self.employee_repository.load_employee(employee_id)
 
         if not employee:
@@ -176,6 +194,7 @@ class FitnessCenterService:
         self.employee_repository.save_employee(employee)
 
     def activate_employee(self, employee_id: str) -> None:
+        """Aktiviert einen Mitarbeiter."""
         employee = self.employee_repository.load_employee(employee_id)
 
         if not employee:
@@ -195,6 +214,7 @@ class FitnessCenterService:
         sku: str = "",
         notes: str | None = None,
     ) -> Product:
+        """Erstellt ein neues Produkt."""
         existing_product = self.product_repository.load_product(product_id)
         if existing_product:
             raise ValueError(f"Produkt mit ID {product_id} existiert bereits")
@@ -214,9 +234,11 @@ class FitnessCenterService:
         return product
 
     def get_product(self, product_id: str) -> Optional[Product]:
+        """Lädt ein Produkt."""
         return self.product_repository.load_product(product_id)
 
     def get_all_products(self) -> List[Product]:
+        """Gibt alle Produkte zurück."""
         return self.product_repository.load_all_products()
     
     def update_product(
@@ -229,6 +251,7 @@ class FitnessCenterService:
         sku: str = "",
         notes: str | None = None,
     ) -> Product:
+        """Aktualisiert ein Produkt."""
         product = self.product_repository.load_product(product_id)
 
         if not product:
@@ -245,6 +268,7 @@ class FitnessCenterService:
         return product
 
     def delete_product(self, product_id: str) -> None:
+        """Löscht ein Produkt."""
         product = self.product_repository.load_product(product_id)
 
         if not product:
@@ -259,6 +283,7 @@ class FitnessCenterService:
         reason: str = "",
         user: str = "system",
     ) -> None:
+        """Erhöht den Lagerbestand eines Produkts."""
         if quantity <= 0:
             raise ValueError("Menge muss größer als 0 sein")
 
@@ -288,6 +313,7 @@ class FitnessCenterService:
         reason: str = "",
         user: str = "system",
     ) -> None:
+        """Reduziert den Lagerbestand eines Produkts."""
         if quantity <= 0:
             raise ValueError("Menge muss größer als 0 sein")
 
@@ -316,9 +342,11 @@ class FitnessCenterService:
         self.movement_repository.save_movement(movement)
 
     def get_movements(self) -> List[Movement]:
+        """Gibt alle Lagerbewegungen zurück."""
         return self.movement_repository.load_movements()
 
     def get_total_inventory_value(self) -> float:
+        """Berechnet den Gesamtwert des Lagers."""
         products = self.product_repository.load_all_products()
         return sum(product.get_total_value() for product in products)
 
@@ -331,6 +359,7 @@ class FitnessCenterService:
         status: str = "available",
         assigned_employee_id: str = "",
     ) -> Equipment:
+        """Erstellt ein neues Gerät."""
         existing_equipment = self.equipment_repository.load_equipment(equipment_id)
         if existing_equipment:
             raise ValueError(f"Gerät mit ID {equipment_id} existiert bereits")
@@ -355,6 +384,7 @@ class FitnessCenterService:
         return equipment
 
     def update_equipment_status(self, equipment_id: str, status: str) -> None:
+        """Ändert den Status eines Geräts."""
         equipment = self.equipment_repository.load_equipment(equipment_id)
 
         if not equipment:
@@ -364,6 +394,7 @@ class FitnessCenterService:
         self.equipment_repository.save_equipment(equipment)
 
     def assign_employee_to_equipment(self, equipment_id: str, employee_id: str) -> None:
+        """Weist einem Gerät einen Mitarbeiter zu."""
         equipment = self.equipment_repository.load_equipment(equipment_id)
         if not equipment:
             raise ValueError(f"Gerät {equipment_id} nicht gefunden")
@@ -376,12 +407,15 @@ class FitnessCenterService:
         self.equipment_repository.save_equipment(equipment)
 
     def get_equipment(self, equipment_id: str) -> Optional[Equipment]:
+        """Lädt ein Gerät."""
         return self.equipment_repository.load_equipment(equipment_id)
 
     def get_all_equipment(self) -> List[Equipment]:
+        """Gibt alle Geräte zurück."""
         return self.equipment_repository.load_all_equipment()
     
     def delete_equipment(self, equipment_id: str) -> None:
+        """Löscht ein Gerät."""
         equipment = self.equipment_repository.load_equipment(equipment_id)
 
         if not equipment:
@@ -396,6 +430,7 @@ class FitnessCenterService:
         machine_type: str,
         assigned_employee_id: str = "",
     ) -> VendingMachine:
+        """Erstellt einen neuen Automaten."""
         existing_machine = self.vending_machine_repository.load_machine(machine_id)
         if existing_machine:
             raise ValueError(f"Automat mit ID {machine_id} existiert bereits")
@@ -418,6 +453,7 @@ class FitnessCenterService:
         return machine
 
     def assign_employee_to_machine(self, machine_id: str, employee_id: str) -> None:
+        """Weist einem Automaten einen Mitarbeiter zu."""
         machine = self.vending_machine_repository.load_machine(machine_id)
         if not machine:
             raise ValueError(f"Automat {machine_id} nicht gefunden")
@@ -430,6 +466,7 @@ class FitnessCenterService:
         self.vending_machine_repository.save_machine(machine)
 
     def deactivate_machine(self, machine_id: str) -> None:
+        """Deaktiviert einen Automaten."""
         machine = self.vending_machine_repository.load_machine(machine_id)
 
         if not machine:
@@ -439,6 +476,7 @@ class FitnessCenterService:
         self.vending_machine_repository.save_machine(machine)
 
     def activate_machine(self, machine_id: str) -> None:
+        """Aktiviert einen Automaten."""
         machine = self.vending_machine_repository.load_machine(machine_id)
 
         if not machine:
@@ -448,12 +486,15 @@ class FitnessCenterService:
         self.vending_machine_repository.save_machine(machine)
 
     def get_machine(self, machine_id: str) -> Optional[VendingMachine]:
+        """Lädt einen Automaten."""
         return self.vending_machine_repository.load_machine(machine_id)
 
     def get_all_machines(self) -> List[VendingMachine]:
+        """Gibt alle Automaten zurück."""
         return self.vending_machine_repository.load_all_machines()
     
     def delete_machine(self, machine_id: str) -> None:
+        """Löscht einen Automaten."""
         machine = self.vending_machine_repository.load_machine(machine_id)
 
         if not machine:
@@ -462,6 +503,7 @@ class FitnessCenterService:
         self.vending_machine_repository.delete_machine(machine_id)
     
     def generate_inventory_report(self) -> str:
+        """Erzeugt einen Lagerbericht über den Report-Adapter."""
         products = self.product_repository.load_all_products()
         movements = self.movement_repository.load_movements()
 

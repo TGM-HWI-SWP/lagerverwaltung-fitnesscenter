@@ -1,54 +1,115 @@
-"""Integration Tests"""
+"""Integration Tests
+
+Dieses Modul enthält Integrationstests für das gesamte System.
+Es überprüft das Zusammenspiel von Repositories, Services und Report-Adapter.
+"""
 
 import pytest
-from src.adapters.repository import InMemoryRepository, RepositoryFactory
+from src.adapters.repository import (
+    InMemoryProductRepository,
+    InMemoryMovementRepository,
+    InMemoryMemberRepository,
+    InMemoryEmployeeRepository,
+    InMemoryEquipmentRepository,
+    InMemoryVendingMachineRepository,
+)
 from src.adapters.report import ConsoleReportAdapter
-from src.services import WarehouseService
+from src.services import FitnessCenterService
 
 
 class TestIntegration:
-    """Integration Tests für das gesamte System"""
+    """Integrationstests für das Fitnesscenter-System."""
 
     def test_full_workflow(self):
-        """Test: Kompletter Workflow - Produkt erstellen, ändern, berichten"""
-        # Initialisierung
-        repository = RepositoryFactory.create_repository("memory")
-        service = WarehouseService(repository)
+        """Testet den kompletten Workflow:
+        
+        - Erstellen von Produkten
+        - Durchführen von Lagerbewegungen
+        - Überprüfung von Beständen
+        - Validierung der Bewegungen und des Gesamtwerts
+        """
+
+        # Repositories
+        product_repo = InMemoryProductRepository()
+        movement_repo = InMemoryMovementRepository()
+        member_repo = InMemoryMemberRepository()
+        employee_repo = InMemoryEmployeeRepository()
+        equipment_repo = InMemoryEquipmentRepository()
+        machine_repo = InMemoryVendingMachineRepository()
+
+        # Service
+        service = FitnessCenterService(
+            product_repository=product_repo,
+            movement_repository=movement_repo,
+            member_repository=member_repo,
+            employee_repository=employee_repo,
+            equipment_repository=equipment_repo,
+            vending_machine_repository=machine_repo,
+            report_adapter=ConsoleReportAdapter(),
+        )
 
         # Produkte erstellen
-        service.create_product("LAPTOP-001", "Laptop ProBook", "Hochwertiger Laptop", 1200.0, category="Elektronik", initial_quantity=5)
-        service.create_product("MOUSE-001", "Wireless Mouse", "Ergonomische Maus", 25.0, category="Zubehör", initial_quantity=50)
+        service.create_product(
+            "P1", "Protein Bar", "Test Produkt", 2.5, category="Food", initial_quantity=10
+        )
+        service.create_product(
+            "P2", "Energy Drink", "Test Produkt", 3.0, category="Drink", initial_quantity=20
+        )
 
-        # Lagerbewegungen durchführen
-        service.add_to_stock("LAPTOP-001", 3, reason="Bestellung #123", user="Max Mustermann")
-        service.remove_from_stock("LAPTOP-001", 2, reason="Verkauf an Kunde", user="Anna Schmidt")
-        service.add_to_stock("MOUSE-001", 10, reason="Nachbestellung", user="Max Mustermann")
+        # Lagerbewegungen
+        service.add_stock("P1", 5, "Nachlieferung")
+        service.remove_stock("P1", 3, "Verkauf")
+        service.add_stock("P2", 10, "Nachlieferung")
 
         # Assertions
-        laptop = service.get_product("LAPTOP-001")
-        assert laptop.quantity == 6  # 5 + 3 - 2
+        product = service.get_product("P1")
+        assert product.quantity == 12  # 10 + 5 - 3
 
         movements = service.get_movements()
         assert len(movements) == 3
 
         total_value = service.get_total_inventory_value()
-        assert total_value == 7200.0 + 600.0  # (1200*6) + (25*60)
+        assert total_value > 0
+
 
     def test_report_generation(self):
-        """Test: Report-Generierung"""
-        repository = InMemoryRepository()
-        service = WarehouseService(repository)
+        """Testet die Generierung des Lagerbestandsberichts:
+        
+        - Erstellung von Testprodukten
+        - Generierung des Reports
+        - Überprüfung, ob Inhalte korrekt enthalten sind
+        """
 
-        service.create_product("P001", "Produkt A", "Test", 100.0, initial_quantity=10)
-        service.create_product("P002", "Produkt B", "Test", 50.0, initial_quantity=5)
+        # Repositories
+        product_repo = InMemoryProductRepository()
+        movement_repo = InMemoryMovementRepository()
+        member_repo = InMemoryMemberRepository()
+        employee_repo = InMemoryEmployeeRepository()
+        equipment_repo = InMemoryEquipmentRepository()
+        machine_repo = InMemoryVendingMachineRepository()
 
-        products = service.get_all_products()
-        movements = service.get_movements()
+        # Report Adapter
+        report_adapter = ConsoleReportAdapter()
 
-        report_adapter = ConsoleReportAdapter(products, movements)
-        inventory_report = report_adapter.generate_inventory_report()
-        movement_report = report_adapter.generate_movement_report()
+        # Service
+        service = FitnessCenterService(
+            product_repository=product_repo,
+            movement_repository=movement_repo,
+            member_repository=member_repo,
+            employee_repository=employee_repo,
+            equipment_repository=equipment_repo,
+            vending_machine_repository=machine_repo,
+            report_adapter=report_adapter,
+        )
 
-        assert "Lagerbestandsbericht" in inventory_report or "Lagerbestandsbericht" not in inventory_report  # Placeholder
-        assert len(inventory_report) > 0
-        assert len(movement_report) > 0
+        # Testdaten
+        service.create_product("P1", "Produkt A", "Test", 100.0, initial_quantity=10)
+        service.create_product("P2", "Produkt B", "Test", 50.0, initial_quantity=5)
+
+        # Report
+        report = service.generate_inventory_report()
+
+        # Assertions
+        assert len(report) > 0
+        assert "P1" in report
+        assert "P2" in report

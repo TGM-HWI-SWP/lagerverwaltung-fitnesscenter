@@ -153,15 +153,53 @@ Persönliches Changelog für [Jovan Vitorovic], Rolle: [Rolle 2 Businesslogik un
 
 ---
 
-## Zusammenfassung
+## [v1.1] - 2026-04-23
 
-**Gesamt implementierte Features:** [Anzahl]  
-**Gesamt geschriebene Tests:** [Anzahl]  
-**Gesamt Commits:** [Anzahl]  
-**Größte Herausforderung:** [Beschreibung]  
-**Schönste Code-Zeile:** [Code-Snippet]
+### Implementiert
+- Finalisierung von Report A (Inventory Report mit Supabase-Daten)
+- Integration der Supabase Repositories in den Service Layer
+- Erweiterung der Test-Skripte:
+  - test_supabase.py
+  - test_member.py
+  - test_inventory_report.py
+- Anpassung und Finalisierung bestehender Tests:
+  - test_domain.py (Unit Tests)
+  - test_integration.py (Integration Tests)
+- Pytest Ergänzung
+- Ergänzung von Docstrings in Test-Dateien und Scripts
+- Überarbeitung und Finalisierung der README-Dokumentation (inkl. korrekter Testbefehle)
+
+### Tests geschrieben
+- Ausführung von Unit Tests (test_domain.py)
+- Ausführung von Integration Tests (test_integration.py)
+- Alle Tests erfolgreich bestanden (15/15)
+- Test der Supabase-Anbindung (Speichern und Laden von Daten)
+- Test der Report-Funktionalität (Inventory Report)
+- Testen von allen Test Dateien die ich erstellt habe inklusive eben pytest von dem ganzen
+
+### Commits
+```
+- b4c94f1b - Adding the test commands for pytest to the README
+- 9760bf7f - docs: add comprehensive docstrings to tests and scripts; test: implement and validate unit and integration tests ; feat: finalize Report A and Supabase integration
+- 7ffb8084 - Adding some changes
+- 84abb051 - Changing the pyproject toml and adding some necessary changes
+- e62df99e - Including the env file with the URL and KEY from SUPABASE and changing the gitignore file
+```
+
+### Mergekonflikt(e)
+- Keine
 
 ---
 
-**Changelog erstellt von:** [Name]  
-**Letzte Aktualisierung:** [Datum]
+## Zusammenfassung
+
+**Gesamt implementierte Features:** 12  
+**Gesamt geschriebene Tests:** 8  
+**Gesamt Commits:** 14  
+**Größte Herausforderung:** Integration der Supabase-Datenbank in die bestehende Port-Adapter-Architektur sowie das Abstimmen der Businesslogik mit den Domain- und Repository-Strukturen anderer Rollen  
+**Schönste Code-Zeile:** `report = service.generate_inventory_report()`
+
+---
+
+**Changelog erstellt von:** Jovan Vitorovic  
+**Letzte Aktualisierung:** 2026-04-23
